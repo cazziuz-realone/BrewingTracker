@@ -1,0 +1,87 @@
+package com.brewingtracker.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import com.brewingtracker.data.database.entities.Project
+import com.brewingtracker.data.database.entities.BeverageType
+import com.brewingtracker.data.database.entities.ProjectPhase
+import com.brewingtracker.data.database.dao.ProjectDao
+import javax.inject.Inject
+
+@HiltViewModel
+class ProjectViewModel @Inject constructor(
+    private val projectDao: ProjectDao
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ProjectUiState())
+    val uiState: StateFlow<ProjectUiState> = _uiState.asStateFlow()
+
+    val allProjects = projectDao.getAllActiveProjects()
+
+    fun createProject(
+        name: String,
+        type: ProjectType,
+        targetOG: Double? = null,
+        targetFG: Double? = null,
+        targetABV: Double? = null,
+        batchSize: Double? = null,
+        notes: String? = null
+    ) {
+        viewModelScope.launch {
+            val project = Project(
+                name = name,
+                type = type,
+                targetOG = targetOG,
+                targetFG = targetFG,
+                targetABV = targetABV,
+                batchSize = batchSize,
+                notes = notes,
+                currentPhase = ProjectPhase.PLANNING
+            )
+            projectDao.insertProject(project)
+            _uiState.value = _uiState.value.copy(
+                showSuccess = true,
+                successMessage = "Project '$name' created successfully!"
+            )
+        }
+    }
+
+    fun updateProject(project: Project) {
+        viewModelScope.launch {
+            projectDao.updateProject(project)
+        }
+    }
+
+    fun updateProjectPhase(projectId: String, phase: ProjectPhase) {
+        viewModelScope.launch {
+            projectDao.updateProjectPhase(projectId, phase)
+        }
+    }
+
+    // Fixed: This should return a reactive Flow
+    fun getProjectById(projectId: String): Flow<Project?> {
+        return allProjects.map { projectList ->
+            projectList.find { it.id == projectId }
+        }
+    }
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(
+            showSuccess = false,
+            showError = false,
+            successMessage = null,
+            errorMessage = null
+        )
+    }
+}
+
+data class ProjectUiState(
+    val isLoading: Boolean = false,
+    val showSuccess: Boolean = false,
+    val showError: Boolean = false,
+    val successMessage: String? = null,
+    val errorMessage: String? = null
+)
