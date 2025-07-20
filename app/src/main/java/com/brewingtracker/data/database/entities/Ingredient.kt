@@ -26,6 +26,7 @@ data class Ingredient(
     val substituteIngredients: String? = null,
     val flavorProfile: String? = null,
     val barcode: String? = null,
+    val isActive: Boolean = true, // Add missing isActive column
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
