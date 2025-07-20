@@ -21,21 +21,3 @@ data class Project(
     val startDate: Long,
     val updatedAt: Long
 )
-
-enum class BeverageType(val displayName: String) {
-    BEER("Beer"),
-    MEAD("Mead"),
-    WINE("Wine"),
-    CIDER("Cider"),
-    KOMBUCHA("Kombucha"),
-    WATER_KEFIR("Water Kefir"),
-    OTHER("Other")
-}
-
-enum class ProjectPhase(val displayName: String) {
-    PLANNING("Planning"),
-    BREWING("Brewing"),
-    FERMENTATION("Fermentation"),
-    CONDITIONING("Conditioning"),
-    COMPLETED("Completed")
-}
