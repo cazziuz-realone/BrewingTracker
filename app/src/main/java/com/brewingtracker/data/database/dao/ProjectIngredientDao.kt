@@ -13,13 +13,16 @@ interface ProjectIngredientDao {
         SELECT pi.*, i.name as ingredientName, i.type as ingredientType 
         FROM project_ingredients pi 
         INNER JOIN ingredients i ON pi.ingredientId = i.id 
-        WHERE pi.projectId = :projectId 
+        WHERE pi.projectId = :projectId
         ORDER BY i.type, i.name
     """)
     fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProjectIngredient(projectIngredient: ProjectIngredient): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProjectIngredients(projectIngredients: List<ProjectIngredient>)
 
     @Update
     suspend fun updateProjectIngredient(projectIngredient: ProjectIngredient)
@@ -30,14 +33,15 @@ interface ProjectIngredientDao {
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId")
     suspend fun deleteAllProjectIngredients(projectId: String)
 
-    @Query("UPDATE project_ingredients SET quantity = :quantity WHERE id = :id")
-    suspend fun updateQuantity(id: Int, quantity: Double)
+    @Query("DELETE FROM project_ingredients WHERE projectId = :projectId AND ingredientId = :ingredientId")
+    suspend fun removeIngredientFromProject(projectId: String, ingredientId: Int)
 }
 
+// Data class for joined query results
 data class ProjectIngredientWithDetails(
     val id: Int,
     val projectId: String,
-    val ingredientId: String, // Changed from Int to String
+    val ingredientId: Int,
     val quantity: Double,
     val unit: String,
     val additionTime: String?,
