@@ -96,6 +96,7 @@ fun CreateProjectScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProjectBasicInfoSection(
     name: String,
@@ -146,7 +147,7 @@ private fun ProjectBasicInfoSection(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    BeverageType.values().forEach { beverageType ->
+                    BeverageType.entries.forEach { beverageType ->
                         DropdownMenuItem(
                             text = { Text(beverageType.displayName) },
                             onClick = {
