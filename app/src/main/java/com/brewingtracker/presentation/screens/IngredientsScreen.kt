@@ -4,9 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,265 +11,164 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.runtime.collectAsState
-import com.brewingtracker.data.database.entities.YeastType
-import com.brewingtracker.presentation.viewmodel.IngredientViewModel
-import com.brewingtracker.presentation.viewmodel.UniversalCategory
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brewingtracker.data.database.entities.Ingredient
+import com.brewingtracker.data.database.entities.IngredientType
+import com.brewingtracker.presentation.viewmodel.IngredientsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientsScreen(
-    viewModel: IngredientViewModel = hiltViewModel()
+    viewModel: IngredientsViewModel = hiltViewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
-    val selectedYeastType by viewModel.selectedYeastType.collectAsState()
-    val filteredIngredients by viewModel.filteredIngredients.collectAsState()
-    val filteredYeasts by viewModel.filteredYeasts.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-
-    val tabs = listOf("Ingredients", "Yeasts")
+    val ingredients by viewModel.filteredIngredients.collectAsStateWithLifecycle()
+    val selectedType by viewModel.selectedIngredientType.collectAsStateWithLifecycle()
+    val selectedBeverageType by viewModel.selectedBeverageType.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val showInStockOnly by viewModel.showInStockOnly.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 80.dp) // Space for bottom navigation
+            .padding(16.dp)
     ) {
         // Header
-        Card(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Ingredient Database",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    OutlinedButton(
-                        onClick = { viewModel.seedSampleData() }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Sample Data")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = viewModel::updateSearchQuery,
-                    label = { Text("Search ${tabs[selectedTab].lowercase()}...") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.updateSearchQuery("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear")
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-        }
-
-        // Tabs
-        TabRow(selectedTabIndex = selectedTab) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = {
-                        selectedTab = index
-                        // Clear search when switching tabs
-                        viewModel.updateSearchQuery("")
-                        // Clear filters when switching tabs
-                        viewModel.updateSelectedCategory(null)
-                        viewModel.updateSelectedYeastType(null)
-                    },
-                    text = { Text(title) }
-                )
-            }
-        }
-
-        // Content
-        when (selectedTab) {
-            0 -> IngredientsTab(
-                ingredients = filteredIngredients,
-                selectedCategory = selectedCategory,
-                onCategorySelected = viewModel::updateSelectedCategory,
-                onStockUpdate = viewModel::updateIngredientStock,
-                modifier = Modifier.weight(1f)
+            Text(
+                text = "Ingredients",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
             )
-            1 -> YeastsTab(
-                yeasts = filteredYeasts,
-                selectedYeastType = selectedYeastType,
-                onYeastTypeSelected = viewModel::updateSelectedYeastType,
-                modifier = Modifier.weight(1f)
-            )
-        }
 
-        // Success/Error Messages as Snackbar-style notifications
-        if (uiState.successMessage != null) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            Row {
+                IconButton(
+                    onClick = { viewModel.toggleShowInStockOnly() }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = uiState.successMessage!!,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        imageVector = if (showInStockOnly) Icons.Default.Inventory else Icons.Default.InventoryOutlined,
+                        contentDescription = if (showInStockOnly) "Show all ingredients" else "Show in-stock only",
+                        tint = if (showInStockOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-
-            LaunchedEffect(uiState.successMessage) {
-                kotlinx.coroutines.delay(3000)
-                viewModel.clearMessages()
-            }
-        }
-
-        if (uiState.errorMessage != null) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                
+                IconButton(
+                    onClick = { viewModel.clearFilters() }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Error,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = uiState.errorMessage!!,
-                        color = MaterialTheme.colorScheme.onErrorContainer
+                        imageVector = Icons.Default.FilterListOff,
+                        contentDescription = "Clear filters"
                     )
                 }
             }
-
-            LaunchedEffect(uiState.errorMessage) {
-                kotlinx.coroutines.delay(5000)
-                viewModel.clearMessages()
-            }
         }
-    }
-}
 
-@Composable
-private fun IngredientsTab(
-    ingredients: List<com.brewingtracker.data.database.entities.Ingredient>,
-    selectedCategory: UniversalCategory?,
-    onCategorySelected: (UniversalCategory?) -> Unit,
-    onStockUpdate: (String, Double) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        // Universal Category Filter
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Search bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::updateSearchQuery,
+            label = { Text("Search ingredients") },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = null)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Ingredient Type Filter
+        Text(
+            text = "Filter by Type",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Filter by Category",
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+            item {
+                FilterChip(
+                    selected = selectedType == null,
+                    onClick = { viewModel.filterByType(null) },
+                    label = { Text("All") }
                 )
-
-                Text(
-                    text = "Universal categories for all beverage makers",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
+            }
+            items(viewModel.getIngredientTypes()) { type ->
+                FilterChip(
+                    selected = selectedType == type,
+                    onClick = { viewModel.filterByType(type) },
+                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
                 )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            onClick = { onCategorySelected(null) },
-                            label = { Text("All") },
-                            selected = selectedCategory == null
-                        )
-                    }
-                    items(UniversalCategory.values()) { category ->
-                        FilterChip(
-                            onClick = { onCategorySelected(category) },
-                            label = { Text(category.displayName) },
-                            selected = selectedCategory == category
-                        )
-                    }
-                }
-
-                // Show category description
-                selectedCategory?.let { category ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${category.description} • Primary uses: ${category.primaryBeverages.joinToString(", ")}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
             }
         }
 
-        // Ingredients List
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Beverage Type Filter
+        Text(
+            text = "Filter by Beverage",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                FilterChip(
+                    selected = selectedBeverageType == null,
+                    onClick = { viewModel.filterByBeverageType(null) },
+                    label = { Text("All") }
+                )
+            }
+            items(viewModel.getBeverageTypes()) { beverageType ->
+                FilterChip(
+                    selected = selectedBeverageType == beverageType,
+                    onClick = { viewModel.filterByBeverageType(beverageType) },
+                    label = { Text(beverageType.replaceFirstChar { it.uppercase() }) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Results count
+        Text(
+            text = "${ingredients.size} ingredients found",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Ingredients list
         if (ingredients.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            Card(
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(32.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Inventory,
+                        imageVector = Icons.Default.SearchOff,
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -282,7 +178,7 @@ private fun IngredientsTab(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Try adjusting your search or filters, or add sample data",
+                        text = "Try adjusting your search or filters",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -290,17 +186,15 @@ private fun IngredientsTab(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(ingredients) { ingredient ->
                     IngredientCard(
                         ingredient = ingredient,
-                        onStockUpdate = onStockUpdate
+                        onStockUpdate = { newStock ->
+                            viewModel.updateIngredientStock(ingredient.id, newStock)
+                        }
                     )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(32.dp)) // Extra bottom padding
                 }
             }
         }
@@ -310,17 +204,18 @@ private fun IngredientsTab(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun IngredientCard(
-    ingredient: com.brewingtracker.data.database.entities.Ingredient,
-    onStockUpdate: (String, Double) -> Unit
+    ingredient: Ingredient,
+    onStockUpdate: (Double) -> Unit
 ) {
     var showStockDialog by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { /* TODO: Navigate to ingredient detail */ }
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -333,309 +228,145 @@ private fun IngredientCard(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Text(
-                        text = ingredient.category ?: ingredient.type.name.lowercase(),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-                }
-
-                // Stock chip
-                AssistChip(
-                    onClick = { showStockDialog = true },
-                    label = {
+                    
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AssistChip(
+                            onClick = { },
+                            label = {
+                                Text(
+                                    text = ingredient.type.name.lowercase().replaceFirstChar { it.uppercase() },
+                                    fontSize = 12.sp
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                        
                         Text(
-                            text = "${ingredient.currentStock} ${ingredient.unit}",
+                            text = ingredient.beverageTypes,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp
                         )
-                    },
-                    leadingIcon = {
+                    }
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    TextButton(
+                        onClick = { showStockDialog = true }
+                    ) {
+                        Text("Stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}")
+                    }
+                    
+                    if (ingredient.currentStock > 0) {
                         Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Stock",
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "In stock",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Out of stock",
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(16.dp)
                         )
                     }
-                )
+                }
             }
 
-            // Description
-            ingredient.description?.let { description ->
+            // Ingredient details
+            ingredient.description?.let { desc ->
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = description,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp)
+                    text = desc,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Flavor Profile
-            ingredient.flavorProfile?.let { flavor ->
-                Text(
-                    text = "Flavor: $flavor",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Properties in a more organized way
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Color (for grains)
+            // Brewing characteristics
+            val characteristics = buildList {
                 ingredient.colorLovibond?.let { color ->
-                    PropertyItem("Color", "${color}°L")
+                    add("Color: ${String.format("%.1f", color)}°L")
                 }
-
-                // Alpha acids (for hops)
                 ingredient.alphaAcidPercentage?.let { alpha ->
-                    PropertyItem("Alpha Acids", "${alpha}%")
+                    add("Alpha: ${String.format("%.1f", alpha)}%")
                 }
+                ingredient.ppgExtract?.let { ppg ->
+                    add("Extract: ${String.format("%.0f", ppg)} PPG")
+                }
+            }
 
-                // Extract (for fermentables)
-                ingredient.ppgExtract?.let { extract ->
-                    PropertyItem("Extract", "${extract} PPG")
-                }
-
-                // Cost
-                ingredient.costPerUnit?.let { cost ->
-                    PropertyItem("Cost", "$${String.format("%.2f", cost)}/${ingredient.unit}")
-                }
+            if (characteristics.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = characteristics.joinToString(" • "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 
-    // Stock Update Dialog
+    // Stock update dialog
     if (showStockDialog) {
-        var newStock by remember { mutableStateOf(ingredient.currentStock.toString()) }
-
-        AlertDialog(
-            onDismissRequest = { showStockDialog = false },
-            title = { Text("Update Stock - ${ingredient.name}") },
-            text = {
-                Column {
-                    Text(
-                        text = "Current stock: ${ingredient.currentStock} ${ingredient.unit}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    OutlinedTextField(
-                        value = newStock,
-                        onValueChange = { newStock = it },
-                        label = { Text("New Stock (${ingredient.unit})") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        newStock.toDoubleOrNull()?.let { stock ->
-                            onStockUpdate(ingredient.id, stock)
-                        }
-                        showStockDialog = false
-                    }
-                ) {
-                    Text("Update")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showStockDialog = false }) {
-                    Text("Cancel")
-                }
+        StockUpdateDialog(
+            ingredient = ingredient,
+            onDismiss = { showStockDialog = false },
+            onStockUpdate = { newStock ->
+                onStockUpdate(newStock)
+                showStockDialog = false
             }
         )
     }
 }
 
 @Composable
-private fun PropertyItem(label: String, value: String) {
-    Column {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            fontWeight = FontWeight.Medium,
-            fontSize = 12.sp
-        )
-    }
-}
-
-@Composable
-private fun YeastsTab(
-    yeasts: List<com.brewingtracker.data.database.entities.Yeast>,
-    selectedYeastType: YeastType?,
-    onYeastTypeSelected: (YeastType?) -> Unit,
-    modifier: Modifier = Modifier
+private fun StockUpdateDialog(
+    ingredient: Ingredient,
+    onDismiss: () -> Unit,
+    onStockUpdate: (Double) -> Unit
 ) {
-    Column(modifier = modifier) {
-        // Yeast Type Filter
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Filter by Yeast Type",
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+    var stockValue by remember { mutableStateOf(ingredient.currentStock.toString()) }
 
-                Text(
-                    text = "Choose the yeast type for your beverage",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Update Stock: ${ingredient.name}") },
+        text = {
+            Column {
+                Text("Current stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}")
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = stockValue,
+                    onValueChange = { stockValue = it },
+                    label = { Text("New stock amount") },
+                    suffix = { Text(ingredient.unit) },
+                    singleLine = true
                 )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            onClick = { onYeastTypeSelected(null) },
-                            label = { Text("All") },
-                            selected = selectedYeastType == null
-                        )
-                    }
-                    items(YeastType.values()) { type ->
-                        FilterChip(
-                            onClick = { onYeastTypeSelected(type) },
-                            label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                            selected = selectedYeastType == type
-                        )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    stockValue.toDoubleOrNull()?.let { newStock ->
+                        onStockUpdate(newStock)
                     }
                 }
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
-
-        if (yeasts.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Science,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "No yeasts found",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "Try adjusting your search or add sample data",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(yeasts) { yeast ->
-                    YeastCard(yeast = yeast)
-                }
-                item {
-                    Spacer(modifier = Modifier.height(32.dp)) // Extra bottom padding
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun YeastCard(
-    yeast: com.brewingtracker.data.database.entities.Yeast
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { /* TODO: Navigate to yeast detail */ }
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = yeast.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "${yeast.brand} - ${yeast.type.name} ${yeast.form.name}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-                }
-
-                // Stock chip
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        Text(
-                            text = "${yeast.currentStock} ${yeast.unit}",
-                            fontSize = 12.sp
-                        )
-                    }
-                )
-            }
-
-            yeast.description?.let { description ->
-                Text(
-                    text = description,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Properties
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                yeast.attenuationRange?.let { attenuation ->
-                    PropertyItem("Attenuation", attenuation)
-                }
-
-                yeast.temperatureRange?.let { temp ->
-                    PropertyItem("Temperature", temp)
-                }
-
-                yeast.alcoholTolerance?.let { alcohol ->
-                    PropertyItem("Alcohol Tolerance", "${alcohol}%")
-                }
-
-                yeast.costPerUnit?.let { cost ->
-                    PropertyItem("Cost", "$${String.format("%.2f", cost)}")
-                }
-            }
-        }
-    }
+    )
 }
