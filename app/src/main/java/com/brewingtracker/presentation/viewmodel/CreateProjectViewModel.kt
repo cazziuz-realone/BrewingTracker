@@ -172,24 +172,26 @@ class CreateProjectViewModel @Inject constructor(
         }
     }
 
-    private fun getDefaultUnit(ingredientType: String): String {
-        return when (ingredientType.lowercase()) {
-            "grain", "malt" -> "lbs"
-            "hop" -> "oz"
-            "fruit", "adjunct" -> "lbs"
-            "yeast_nutrient", "acid" -> "tsp"
-            else -> "oz"
+    private fun getDefaultUnit(ingredientType: IngredientType): String {
+        return when (ingredientType) {
+            IngredientType.GRAIN -> "lbs"
+            IngredientType.HOP -> "oz"
+            IngredientType.FRUIT, IngredientType.ADJUNCT -> "lbs"
+            IngredientType.YEAST -> "packet"
+            IngredientType.SPICE -> "tsp"
+            IngredientType.OTHER -> "oz"
         }
     }
 
-    private fun getDefaultAdditionTime(ingredientType: String): String {
-        return when (ingredientType.lowercase()) {
-            "grain", "malt" -> "Mash"
-            "hop" -> "60 min"
-            "fruit" -> "Secondary"
-            "adjunct" -> "Boil"
-            "yeast_nutrient" -> "Primary"
-            else -> "As needed"
+    private fun getDefaultAdditionTime(ingredientType: IngredientType): String {
+        return when (ingredientType) {
+            IngredientType.GRAIN -> "Mash"
+            IngredientType.HOP -> "60 min"
+            IngredientType.FRUIT -> "Secondary"
+            IngredientType.ADJUNCT -> "Boil"
+            IngredientType.YEAST -> "Primary"
+            IngredientType.SPICE -> "Boil"
+            IngredientType.OTHER -> "As needed"
         }
     }
 }
