@@ -21,12 +21,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
 
-        // Room schema export
-        kapt {
-            arguments {
-                arg("room.schemaLocation", "$projectDir/schemas")
-            }
+    // Room schema export configuration
+    kapt {
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -67,7 +67,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
-    // Compose BOM
+    // Compose BOM - Updated version
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
