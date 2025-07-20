@@ -20,11 +20,11 @@ fun BrewingNavigation(
         // Dashboard/Home Screen
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigateToCreateProject = {
-                    navController.navigate(Screen.CreateProject.route)
-                },
                 onNavigateToProjects = {
                     navController.navigate(Screen.Projects.route)
+                },
+                onNavigateToCalculators = {
+                    navController.navigate(Screen.Calculators.route)
                 }
             )
         }
@@ -32,10 +32,10 @@ fun BrewingNavigation(
         // Projects Screen
         composable(Screen.Projects.route) {
             ProjectsScreen(
-                onNavigateToCreateProject = {
+                onCreateProject = {
                     navController.navigate(Screen.CreateProject.route)
                 },
-                onNavigateToProjectDetail = { projectId ->
+                onProjectClick = { projectId ->
                     navController.navigate(Screen.ProjectDetail.createRoute(projectId))
                 }
             )
@@ -44,10 +44,10 @@ fun BrewingNavigation(
         // Create Project Screen
         composable(Screen.CreateProject.route) {
             CreateProjectScreen(
-                onNavigateBack = {
+                onBackClick = {
                     navController.popBackStack()
                 },
-                onProjectCreated = { projectId ->
+                onProjectCreated = {
                     navController.popBackStack()
                 }
             )
@@ -65,8 +65,14 @@ fun BrewingNavigation(
             val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
             ProjectDetailScreen(
                 projectId = projectId,
-                onNavigateBack = {
+                onBackClick = {
                     navController.popBackStack()
+                },
+                onEditClick = {
+                    navController.navigate(Screen.EditProject.createRoute(projectId))
+                },
+                onAddIngredientsClick = {
+                    navController.navigate(Screen.AddIngredients.createRoute(projectId))
                 }
             )
         }
@@ -79,7 +85,7 @@ fun BrewingNavigation(
         // Calculators Screen
         composable(Screen.Calculators.route) {
             CalculatorsScreen(
-                onNavigateToCalculator = { calculatorType ->
+                onCalculatorClick = { calculatorType ->
                     navController.navigate(Screen.Calculator.createRoute(calculatorType))
                 }
             )
@@ -115,7 +121,7 @@ fun BrewingNavigation(
                 else -> {
                     // Fallback to calculators list
                     CalculatorsScreen(
-                        onNavigateToCalculator = { type ->
+                        onCalculatorClick = { type ->
                             navController.navigate(Screen.Calculator.createRoute(type))
                         }
                     )
