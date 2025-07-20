@@ -48,7 +48,8 @@ fun BrewingTrackerApp() {
         }
     ) { innerPadding ->
         BrewingNavigation(
-            navController = navController
+            navController = navController,
+            modifier = Modifier.padding(innerPadding)
         )
     }
 }
