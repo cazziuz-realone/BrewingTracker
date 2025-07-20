@@ -2,37 +2,59 @@ package com.brewingtracker.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.UUID
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "yeasts")
+@Parcelize
 data class Yeast(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey
+    val id: Int,
     val name: String,
     val brand: String,
     val type: YeastType,
-    val form: YeastForm,
-    val attenuationRange: String? = null,
-    val temperatureRange: String? = null,
+    val beverageTypes: String, // "beer,mead,wine"
+    
+    // Performance characteristics
+    val temperatureRangeMin: Int? = null,
+    val temperatureRangeMax: Int? = null,
     val alcoholTolerance: Double? = null,
-    val flocculation: FlocculationLevel? = null,
-    val description: String? = null,
-    val currentStock: Int = 0,
-    val unit: String = "packets",
+    val attenuationMin: Int? = null,
+    val attenuationMax: Int? = null,
+    val flocculation: FlocculationType? = null,
+    
+    // Kveik-specific
+    val isKveik: Boolean = false,
+    val kveikStrainOrigin: String? = null,
+    val temperatureRangeKveik: String? = null, // often much higher
+    
+    // Inventory
+    val currentStock: Int = 0, // packets/vials
     val costPerUnit: Double? = null,
-    val supplier: String? = null,
     val expirationDate: Long? = null,
+    
+    val description: String? = null,
+    val usageNotes: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) : Parcelable
 
 enum class YeastType {
-    ALE, LAGER, WILD, WINE, MEAD, CHAMPAGNE, DISTILLERS, OTHER
+    ALE,
+    LAGER,
+    WINE,
+    MEAD,
+    KVEIK,
+    WILD,
+    CHAMPAGNE,
+    CIDER,
+    SAKE,
+    KOMBUCHA
 }
 
-enum class YeastForm {
-    DRY, LIQUID, SLANT, PLATE, OTHER
-}
-
-enum class FlocculationLevel {
-    LOW, MEDIUM, HIGH, VERY_HIGH
+enum class FlocculationType {
+    LOW,
+    MEDIUM,
+    HIGH,
+    VARIABLE
 }
