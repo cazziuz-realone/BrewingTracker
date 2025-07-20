@@ -10,6 +10,7 @@ import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.database.entities.ProjectPhase
 import com.brewingtracker.data.database.dao.ProjectDao
 import javax.inject.Inject
+import java.util.*
 
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
@@ -23,23 +24,29 @@ class ProjectViewModel @Inject constructor(
 
     fun createProject(
         name: String,
-        type: ProjectType,
+        type: BeverageType, // Fixed: Use BeverageType instead of ProjectType
         targetOG: Double? = null,
         targetFG: Double? = null,
         targetABV: Double? = null,
-        batchSize: Double? = null,
+        batchSize: Double = 5.0, // Fixed: Provide default value
         notes: String? = null
     ) {
         viewModelScope.launch {
             val project = Project(
+                id = UUID.randomUUID().toString(), // Fixed: Add required id
                 name = name,
                 type = type,
+                batchSize = batchSize, // Fixed: This is required, not optional
                 targetOG = targetOG,
                 targetFG = targetFG,
                 targetABV = targetABV,
-                batchSize = batchSize,
                 notes = notes,
-                currentPhase = ProjectPhase.PLANNING
+                currentPhase = ProjectPhase.PLANNING,
+                isCompleted = false, // Fixed: Add required fields
+                isFavorite = false,
+                isActive = true,
+                startDate = System.currentTimeMillis(), // Fixed: Add required startDate
+                updatedAt = System.currentTimeMillis() // Fixed: Add required updatedAt
             )
             projectDao.insertProject(project)
             _uiState.value = _uiState.value.copy(
