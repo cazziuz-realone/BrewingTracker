@@ -2,51 +2,60 @@ package com.brewingtracker.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.brewingtracker.data.database.entities.*
-import com.brewingtracker.presentation.viewmodel.CreateProjectViewModel
-import com.brewingtracker.presentation.viewmodel.ProjectIngredientUi
+import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateProjectScreen(
-    onNavigateBack: () -> Unit,
-    onProjectCreated: (String) -> Unit,
-    viewModel: CreateProjectViewModel = hiltViewModel()
+    onBackClick: () -> Unit,
+    onProjectCreated: () -> Unit,
+    viewModel: ProjectsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val availableIngredients by viewModel.availableIngredients.collectAsStateWithLifecycle()
+    var projectName by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf(ProjectType.BEER) }
+    var description by remember { mutableStateOf("") }
+    var batchSize by remember { mutableStateOf("") }
+    var targetOG by remember { mutableStateOf("") }
+    var targetFG by remember { mutableStateOf("") }
+    var targetABV by remember { mutableStateOf("") }
+
+    var typeExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Create New Project") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     TextButton(
                         onClick = {
-                            viewModel.createProject { projectId ->
-                                onProjectCreated(projectId)
-                            }
+                            viewModel.createProject(
+                                name = projectName,
+                                type = selectedType,
+                                description = description.takeIf { it.isNotBlank() },
+                                batchSize = batchSize.toDoubleOrNull(),
+                                targetOG = targetOG.toDoubleOrNull(),
+                                targetFG = targetFG.toDoubleOrNull(),
+                                targetABV = targetABV.toDoubleOrNull()
+                            )
+                            onProjectCreated()
                         },
-                        enabled = uiState.isValidProject
+                        enabled = projectName.isNotBlank()
                     ) {
                         Text("Create")
                     }
@@ -63,197 +72,169 @@ fun CreateProjectScreen(
         ) {
             // Basic Project Information
             item {
-                ProjectBasicInfoSection(
-                    name = uiState.name,
-                    onNameChange = viewModel::updateName,
-                    type = uiState.type,
-                    onTypeChange = viewModel::updateType,
-                    batchSize = uiState.batchSize,
-                    onBatchSizeChange = viewModel::updateBatchSize
-                )
-            }
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Project Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
 
-            // Target Parameters
-            item {
-                TargetParametersSection(
-                    targetOG = uiState.targetOG,
-                    onTargetOGChange = viewModel::updateTargetOG,
-                    targetFG = uiState.targetFG,
-                    onTargetFGChange = viewModel::updateTargetFG,
-                    targetABV = uiState.targetABV,
-                    onTargetABVChange = viewModel::updateTargetABV
-                )
-            }
+                        OutlinedTextField(
+                            value = projectName,
+                            onValueChange = { projectName = it },
+                            label = { Text("Project Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("e.g., Summer IPA, Honey Mead") },
+                            isError = projectName.isBlank()
+                        )
 
-            // Notes Section
-            item {
-                NotesSection(
-                    notes = uiState.notes,
-                    onNotesChange = viewModel::updateNotes
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ProjectBasicInfoSection(
-    name: String,
-    onNameChange: (String) -> Unit,
-    type: BeverageType,
-    onTypeChange: (BeverageType) -> Unit,
-    batchSize: String,
-    onBatchSizeChange: (String) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Project Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text("Project Name") },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g., Summer IPA, Honey Mead") }
-            )
-
-            // Beverage Type Dropdown
-            var expanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = type.displayName,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Beverage Type") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    BeverageType.entries.forEach { beverageType ->
-                        DropdownMenuItem(
-                            text = { Text(beverageType.displayName) },
-                            onClick = {
-                                onTypeChange(beverageType)
-                                expanded = false
+                        // Project Type Dropdown
+                        ExposedDropdownMenuBox(
+                            expanded = typeExpanded,
+                            onExpandedChange = { typeExpanded = !typeExpanded }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                onValueChange = { },
+                                readOnly = true,
+                                label = { Text("Project Type") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = typeExpanded,
+                                onDismissRequest = { typeExpanded = false }
+                            ) {
+                                ProjectType.values().forEach { type ->
+                                    DropdownMenuItem(
+                                        text = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                        onClick = {
+                                            selectedType = type
+                                            typeExpanded = false
+                                        }
+                                    )
+                                }
                             }
+                        }
+
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Description (Optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            placeholder = { Text("Brief description of your project") }
+                        )
+
+                        OutlinedTextField(
+                            value = batchSize,
+                            onValueChange = { batchSize = it },
+                            label = { Text("Batch Size (gallons)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            placeholder = { Text("5.0") }
                         )
                     }
                 }
             }
 
-            OutlinedTextField(
-                value = batchSize,
-                onValueChange = onBatchSizeChange,
-                label = { Text("Batch Size (gallons)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                placeholder = { Text("5.0") }
-            )
-        }
-    }
-}
+            // Target Parameters
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Target Parameters (Optional)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
 
-@Composable
-private fun TargetParametersSection(
-    targetOG: String,
-    onTargetOGChange: (String) -> Unit,
-    targetFG: String,
-    onTargetFGChange: (String) -> Unit,
-    targetABV: String,
-    onTargetABVChange: (String) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Target Parameters",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+                        Text(
+                            text = "Set your brewing targets. You can always update these later.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = targetOG,
-                    onValueChange = onTargetOGChange,
-                    label = { Text("Target OG") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    placeholder = { Text("1.050") }
-                )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = targetOG,
+                                onValueChange = { targetOG = it },
+                                label = { Text("Target OG") },
+                                modifier = Modifier.weight(1f),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = { Text("1.050") }
+                            )
 
-                OutlinedTextField(
-                    value = targetFG,
-                    onValueChange = onTargetFGChange,
-                    label = { Text("Target FG") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    placeholder = { Text("1.010") }
-                )
+                            OutlinedTextField(
+                                value = targetFG,
+                                onValueChange = { targetFG = it },
+                                label = { Text("Target FG") },
+                                modifier = Modifier.weight(1f),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = { Text("1.010") }
+                            )
+                        }
 
-                OutlinedTextField(
-                    value = targetABV,
-                    onValueChange = onTargetABVChange,
-                    label = { Text("Target ABV%") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    placeholder = { Text("5.2") }
-                )
+                        OutlinedTextField(
+                            value = targetABV,
+                            onValueChange = { targetABV = it },
+                            label = { Text("Target ABV%") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            placeholder = { Text("5.2") }
+                        )
+                    }
+                }
+            }
+
+            // Project Type Information
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = getProjectTypeDescription(selectedType),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-@Composable
-private fun NotesSection(
-    notes: String,
-    onNotesChange: (String) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Notes",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            OutlinedTextField(
-                value = notes,
-                onValueChange = onNotesChange,
-                label = { Text("Project Notes") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                placeholder = { Text("Add brewing notes, recipe adjustments, etc.") }
-            )
-        }
+private fun getProjectTypeDescription(type: ProjectType): String {
+    return when (type) {
+        ProjectType.BEER -> "Traditional beer brewing with grains, hops, and yeast. Perfect for ales, lagers, and specialty beers."
+        ProjectType.MEAD -> "Honey-based fermented beverage. Create traditional meads, melomels (with fruit), or experimental varieties."
+        ProjectType.WINE -> "Grape or fruit wine production. Track fermentation, aging, and clarification processes."
+        ProjectType.CIDER -> "Apple or pear-based alcoholic beverages. Monitor fermentation and carbonation levels."
+        ProjectType.KOMBUCHA -> "Fermented tea beverage with SCOBY. Track SCOBY health and fermentation progress."
+        ProjectType.WATER_KEFIR -> "Probiotic fermented beverage using water kefir grains. Monitor grain health and flavoring."
+        ProjectType.OTHER -> "Custom brewing project. Use for experimental fermentations or unique beverage types."
     }
 }
