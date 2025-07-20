@@ -1,27 +1,38 @@
 package com.brewingtracker.data.database
 
 import androidx.room.TypeConverter
-import com.brewingtracker.data.database.entities.BeverageType
-import com.brewingtracker.data.database.entities.ProjectPhase
+import com.brewingtracker.data.database.entities.*
 
 class Converters {
+    
     @TypeConverter
-    fun fromBeverageType(value: BeverageType): String {
-        return value.name
-    }
-
+    fun fromProjectType(type: ProjectType): String = type.name
+    
     @TypeConverter
-    fun toBeverageType(value: String): BeverageType {
-        return BeverageType.valueOf(value)
-    }
-
+    fun toProjectType(type: String): ProjectType = ProjectType.valueOf(type)
+    
     @TypeConverter
-    fun fromProjectPhase(value: ProjectPhase): String {
-        return value.name
-    }
-
+    fun fromProjectPhase(phase: ProjectPhase): String = phase.name
+    
     @TypeConverter
-    fun toProjectPhase(value: String): ProjectPhase {
-        return ProjectPhase.valueOf(value)
-    }
+    fun toProjectPhase(phase: String): ProjectPhase = ProjectPhase.valueOf(phase)
+    
+    @TypeConverter
+    fun fromIngredientType(type: IngredientType): String = type.name
+    
+    @TypeConverter
+    fun toIngredientType(type: String): IngredientType = IngredientType.valueOf(type)
+    
+    @TypeConverter
+    fun fromYeastType(type: YeastType): String = type.name
+    
+    @TypeConverter
+    fun toYeastType(type: String): YeastType = YeastType.valueOf(type)
+    
+    @TypeConverter
+    fun fromFlocculationType(type: FlocculationType?): String? = type?.name
+    
+    @TypeConverter
+    fun toFlocculationType(type: String?): FlocculationType? = 
+        type?.let { FlocculationType.valueOf(it) }
 }
