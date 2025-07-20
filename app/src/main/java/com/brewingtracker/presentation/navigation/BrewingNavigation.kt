@@ -1,11 +1,10 @@
 package com.brewingtracker.presentation.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.brewingtracker.presentation.screens.CreateProjectScreen
+import com.brewingtracker.presentation.screens.*
 
 @Composable
 fun BrewingNavigation(
@@ -17,10 +16,29 @@ fun BrewingNavigation(
     ) {
         // Dashboard/Home Screen
         composable(Screen.Dashboard.route) {
-            Text("Brewing Tracker Home - Dashboard")
+            DashboardScreen(
+                onNavigateToCreateProject = {
+                    navController.navigate(Screen.CreateProject.route)
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.Projects.route)
+                }
+            )
         }
 
-        // Create Project Screen - THE IMPORTANT ONE
+        // Projects Screen
+        composable(Screen.Projects.route) {
+            ProjectsScreen(
+                onNavigateToCreateProject = {
+                    navController.navigate(Screen.CreateProject.route)
+                },
+                onNavigateToProjectDetail = { projectId ->
+                    navController.navigate(Screen.ProjectDetail.createRoute(projectId))
+                }
+            )
+        }
+
+        // Create Project Screen
         composable(Screen.CreateProject.route) {
             CreateProjectScreen(
                 onNavigateBack = {
@@ -32,9 +50,79 @@ fun BrewingNavigation(
             )
         }
 
-        // You can add other screens here as needed using your existing Screen objects
-        // composable(Screen.Projects.route) { ... }
-        // composable(Screen.Calculators.route) { ... }
-        // etc.
+        // Project Detail Screen
+        composable(
+            route = Screen.ProjectDetail.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("projectId") {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
+            ProjectDetailScreen(
+                projectId = projectId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // Ingredients Screen
+        composable(Screen.Ingredients.route) {
+            IngredientsScreen()
+        }
+
+        // Calculators Screen
+        composable(Screen.Calculators.route) {
+            CalculatorsScreen(
+                onNavigateToCalculator = { calculatorType ->
+                    navController.navigate(Screen.Calculator.createRoute(calculatorType))
+                }
+            )
+        }
+
+        // Individual Calculator Screens
+        composable(
+            route = Screen.Calculator.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("type") {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val calculatorType = backStackEntry.arguments?.getString("type") ?: ""
+            
+            when (calculatorType) {
+                "abv" -> ABVCalculatorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+                "ibu" -> IBUCalculatorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+                "color" -> ColorCalculatorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+                "priming" -> PrimingSugarCalculatorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+                "brix" -> BrixConverterScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+                else -> {
+                    // Fallback to calculators list
+                    CalculatorsScreen(
+                        onNavigateToCalculator = { type ->
+                            navController.navigate(Screen.Calculator.createRoute(type))
+                        }
+                    )
+                }
+            }
+        }
+
+        // Settings Screen
+        composable(Screen.Settings.route) {
+            SettingsScreen()
+        }
     }
 }
