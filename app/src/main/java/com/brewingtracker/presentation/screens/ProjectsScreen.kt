@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,7 +17,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.data.database.entities.Project
-import com.brewingtracker.presentation.viewmodel.ProjectViewModel
+import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -24,15 +27,18 @@ import java.util.*
 fun ProjectsScreen(
     onCreateProject: () -> Unit,
     onProjectClick: (String) -> Unit,
-    viewModel: ProjectViewModel = hiltViewModel()
+    viewModel: ProjectsViewModel = hiltViewModel()
 ) {
-    val projects by viewModel.allProjects.collectAsState(initial = emptyList())
+    val projects by viewModel.filteredProjects.collectAsStateWithLifecycle()
+    val selectedType by viewModel.selectedProjectType.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Header with title and create button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -55,6 +61,39 @@ fun ProjectsScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Search bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::updateSearchQuery,
+            label = { Text("Search projects") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Filter chips
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                FilterChip(
+                    selected = selectedType == null,
+                    onClick = { viewModel.filterByType(null) },
+                    label = { Text("All") }
+                )
+            }
+            items(ProjectType.values()) { type ->
+                FilterChip(
+                    selected = selectedType == type,
+                    onClick = { viewModel.filterByType(type) },
+                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         if (projects.isEmpty()) {
@@ -69,27 +108,37 @@ fun ProjectsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "No projects yet",
+                        text = if (searchQuery.isNotBlank() || selectedType != null) {
+                            "No projects match your filters"
+                        } else {
+                            "No projects yet"
+                        },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Create your first brewing project to get started",
+                        text = if (searchQuery.isNotBlank() || selectedType != null) {
+                            "Try adjusting your search or filters"
+                        } else {
+                            "Create your first brewing project to get started"
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp)
                     )
 
-                    Button(
-                        onClick = onCreateProject,
-                        modifier = Modifier.padding(top = 16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Create Project")
+                    if (searchQuery.isBlank() && selectedType == null) {
+                        Button(
+                            onClick = onCreateProject,
+                            modifier = Modifier.padding(top = 16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Create Project")
+                        }
                     }
                 }
             }
@@ -101,7 +150,10 @@ fun ProjectsScreen(
                 items(projects) { project ->
                     ProjectCard(
                         project = project,
-                        onClick = { onProjectClick(project.id) }
+                        onClick = { onProjectClick(project.id) },
+                        onFavoriteClick = { 
+                            viewModel.toggleProjectFavorite(project.id, project.isFavorite)
+                        }
                     )
                 }
             }
@@ -113,7 +165,8 @@ fun ProjectsScreen(
 @Composable
 private fun ProjectCard(
     project: Project,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onFavoriteClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
@@ -140,21 +193,42 @@ private fun ProjectCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
+                    project.description?.let { desc ->
+                        Text(
+                            text = desc,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
 
-                // Status chip
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        Text(
-                            text = project.currentPhase.name.replace("_", " "),
-                            fontSize = 12.sp
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Favorite button
+                    IconButton(onClick = onFavoriteClick) {
+                        Icon(
+                            imageVector = if (project.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (project.isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (project.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    }
+
+                    // Status chip
+                    AssistChip(
+                        onClick = { },
+                        label = {
+                            Text(
+                                text = project.currentPhase.name.replace("_", " "),
+                                fontSize = 12.sp
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
                     )
-                )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -166,7 +240,15 @@ private fun ProjectCard(
             ) {
                 project.batchSize?.let { size ->
                     Text(
-                        text = "${String.format("%.1f", size)} gal",
+                        text = "${String.format("%.1f", size)} ${project.batchUnit}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                project.targetABV?.let { abv ->
+                    Text(
+                        text = "Target ABV: ${String.format("%.1f", abv)}%",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
