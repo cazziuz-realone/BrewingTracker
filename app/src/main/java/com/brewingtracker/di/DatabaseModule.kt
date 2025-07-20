@@ -18,13 +18,12 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideBrewingDatabase(@ApplicationContext context: Context): BrewingDatabase {
-        return Room.databaseBuilder(
-            context.applicationContext,
-            BrewingDatabase::class.java,
-            "brewing_database"
-        )
-            .fallbackToDestructiveMigration()
-            .build()
+        return BrewingDatabase.getDatabase(context)
+    }
+
+    @Provides
+    fun provideProjectDao(database: BrewingDatabase): ProjectDao {
+        return database.projectDao()
     }
 
     @Provides
@@ -35,11 +34,6 @@ object DatabaseModule {
     @Provides
     fun provideYeastDao(database: BrewingDatabase): YeastDao {
         return database.yeastDao()
-    }
-
-    @Provides
-    fun provideProjectDao(database: BrewingDatabase): ProjectDao {
-        return database.projectDao()
     }
 
     @Provides
