@@ -37,7 +37,7 @@ interface ProjectIngredientDao {
 data class ProjectIngredientWithDetails(
     val id: Int,
     val projectId: String,
-    val ingredientId: Int,
+    val ingredientId: String, // Changed from Int to String
     val quantity: Double,
     val unit: String,
     val additionTime: String?,
