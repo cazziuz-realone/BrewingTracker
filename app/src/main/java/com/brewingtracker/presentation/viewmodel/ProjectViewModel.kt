@@ -64,7 +64,8 @@ class ProjectViewModel @Inject constructor(
 
     fun updateProjectPhase(projectId: String, phase: ProjectPhase) {
         viewModelScope.launch {
-            projectDao.updateProjectPhase(projectId, phase)
+            // Fixed: Pass the timestamp parameter that the DAO expects
+            projectDao.updateProjectPhase(projectId, phase, System.currentTimeMillis())
         }
     }
 
