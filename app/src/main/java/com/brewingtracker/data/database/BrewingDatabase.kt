@@ -15,7 +15,7 @@ import com.brewingtracker.data.database.entities.*
         Project::class,
         ProjectIngredient::class
     ],
-    version = 3,
+    version = 4, // Incremented version due to schema changes
     exportSchema = false
 )
 @TypeConverters(Converters::class)
