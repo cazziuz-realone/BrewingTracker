@@ -109,7 +109,7 @@ class IngredientViewModel @Inject constructor(
         }
     }
 
-    fun updateIngredientStock(ingredientId: String, newStock: Double) {
+    fun updateIngredientStock(ingredientId: Int, newStock: Double) {
         viewModelScope.launch {
             try {
                 val ingredients = allIngredients.first()
@@ -168,10 +168,12 @@ class IngredientViewModel @Inject constructor(
     private fun getSampleIngredients() = listOf(
         // Grains & Malts (for beer makers)
         Ingredient(
+            id = 1,
             name = "Pilsner Malt",
             type = IngredientType.GRAIN,
             category = "Base Malt",
             description = "Light, clean base malt perfect for lagers and light ales",
+            beverageTypes = "beer,sake",
             colorLovibond = 1.7,
             ppgExtract = 37.0,
             currentStock = 10.0,
@@ -179,10 +181,12 @@ class IngredientViewModel @Inject constructor(
             costPerUnit = 1.50
         ),
         Ingredient(
+            id = 2,
             name = "Munich Malt",
             type = IngredientType.GRAIN,
             category = "Base Malt",
             description = "Rich, malty flavor with amber color",
+            beverageTypes = "beer",
             colorLovibond = 9.0,
             ppgExtract = 37.0,
             currentStock = 5.0,
@@ -190,10 +194,12 @@ class IngredientViewModel @Inject constructor(
             costPerUnit = 1.60
         ),
         Ingredient(
+            id = 3,
             name = "Crystal 60L",
             type = IngredientType.GRAIN,
             category = "Crystal Malt",
             description = "Medium crystal malt adding sweetness and amber color",
+            beverageTypes = "beer",
             colorLovibond = 60.0,
             ppgExtract = 34.0,
             currentStock = 3.0,
@@ -203,10 +209,12 @@ class IngredientViewModel @Inject constructor(
 
         // Hops (for beer makers)
         Ingredient(
+            id = 4,
             name = "Cascade",
             type = IngredientType.HOP,
             category = "Aroma Hop",
             description = "Classic American hop with citrus and floral notes",
+            beverageTypes = "beer",
             alphaAcidPercentage = 5.5,
             currentStock = 4.0,
             unit = "oz",
@@ -214,10 +222,12 @@ class IngredientViewModel @Inject constructor(
             flavorProfile = "Citrus, Floral, Grapefruit"
         ),
         Ingredient(
+            id = 5,
             name = "Centennial",
             type = IngredientType.HOP,
             category = "Dual Purpose",
             description = "Super Cascade with intense citrus character",
+            beverageTypes = "beer",
             alphaAcidPercentage = 10.0,
             currentStock = 3.0,
             unit = "oz",
@@ -227,40 +237,48 @@ class IngredientViewModel @Inject constructor(
 
         // Fruits & Juices (for wine, cider, mead makers)
         Ingredient(
+            id = 6,
             name = "Sweet Cherries",
             type = IngredientType.FRUIT,
             category = "Stone Fruit",
             description = "Fresh sweet cherries perfect for meads and fruit wines",
+            beverageTypes = "mead,wine,cider,fruit_beer",
             currentStock = 5.0,
             unit = "lbs",
             costPerUnit = 4.50,
             flavorProfile = "Sweet, Tart, Rich"
         ),
         Ingredient(
+            id = 7,
             name = "Blueberries",
             type = IngredientType.FRUIT,
             category = "Berry",
             description = "Fresh blueberries for complex fruit character",
+            beverageTypes = "mead,wine,cider,fruit_beer",
             currentStock = 3.0,
             unit = "lbs",
             costPerUnit = 5.00,
             flavorProfile = "Sweet, Tart, Antioxidant"
         ),
         Ingredient(
+            id = 8,
             name = "Granny Smith Apples",
             type = IngredientType.FRUIT,
             category = "Apple",
             description = "Tart apples perfect for traditional ciders",
+            beverageTypes = "cider,wine",
             currentStock = 10.0,
             unit = "lbs",
             costPerUnit = 2.50,
             flavorProfile = "Tart, Crisp, Fresh"
         ),
         Ingredient(
+            id = 9,
             name = "Concord Grapes",
             type = IngredientType.FRUIT,
             category = "Grape",
             description = "Classic American grapes for deep, rich wines",
+            beverageTypes = "wine",
             currentStock = 8.0,
             unit = "lbs",
             costPerUnit = 3.00,
@@ -269,10 +287,12 @@ class IngredientViewModel @Inject constructor(
 
         // Honey & Sugars (for mead makers, sugar additions)
         Ingredient(
+            id = 10,
             name = "Wildflower Honey",
             type = IngredientType.ADJUNCT,
             category = "Honey",
             description = "Light, floral honey perfect for traditional meads",
+            beverageTypes = "mead,wine,cider,beer",
             ppgExtract = 35.0,
             currentStock = 6.0,
             unit = "lbs",
@@ -280,10 +300,12 @@ class IngredientViewModel @Inject constructor(
             flavorProfile = "Floral, Light, Sweet"
         ),
         Ingredient(
+            id = 11,
             name = "Orange Blossom Honey",
             type = IngredientType.ADJUNCT,
             category = "Honey",
             description = "Delicate citrus notes from orange blossoms",
+            beverageTypes = "mead,wine,cider",
             ppgExtract = 35.0,
             currentStock = 4.0,
             unit = "lbs",
@@ -291,10 +313,12 @@ class IngredientViewModel @Inject constructor(
             flavorProfile = "Citrus, Floral, Delicate"
         ),
         Ingredient(
+            id = 12,
             name = "Clover Honey",
             type = IngredientType.ADJUNCT,
             category = "Honey",
             description = "Mild, versatile honey great for beginners",
+            beverageTypes = "mead,wine,cider,beer",
             ppgExtract = 35.0,
             currentStock = 5.0,
             unit = "lbs",
@@ -302,10 +326,12 @@ class IngredientViewModel @Inject constructor(
             flavorProfile = "Mild, Clean, Sweet"
         ),
         Ingredient(
+            id = 13,
             name = "Corn Sugar (Dextrose)",
             type = IngredientType.ADJUNCT,
             category = "Sugar",
             description = "Pure dextrose for priming and boosting alcohol",
+            beverageTypes = "beer,wine,mead,cider",
             ppgExtract = 40.0,
             currentStock = 2.0,
             unit = "lbs",
@@ -315,30 +341,36 @@ class IngredientViewModel @Inject constructor(
 
         // Spices & Flavorings (for everyone)
         Ingredient(
+            id = 14,
             name = "Vanilla Beans",
             type = IngredientType.SPICE,
             category = "Spice",
             description = "Madagascar vanilla beans for rich, complex flavor",
+            beverageTypes = "beer,mead,wine,cider,kombucha",
             currentStock = 10.0,
             unit = "beans",
             costPerUnit = 1.50,
             flavorProfile = "Sweet, Rich, Aromatic"
         ),
         Ingredient(
+            id = 15,
             name = "Cinnamon Sticks",
             type = IngredientType.SPICE,
             category = "Spice",
             description = "Ceylon cinnamon for warm, sweet spicing",
+            beverageTypes = "beer,mead,wine,cider,kombucha",
             currentStock = 20.0,
             unit = "sticks",
             costPerUnit = 0.25,
             flavorProfile = "Warm, Sweet, Aromatic"
         ),
         Ingredient(
+            id = 16,
             name = "Fresh Ginger",
             type = IngredientType.SPICE,
             category = "Spice",
             description = "Fresh ginger root for heat and complexity",
+            beverageTypes = "beer,mead,wine,cider,kombucha",
             currentStock = 0.5,
             unit = "lbs",
             costPerUnit = 4.00,
@@ -347,20 +379,24 @@ class IngredientViewModel @Inject constructor(
 
         // Other (acids, chemicals, etc.)
         Ingredient(
+            id = 17,
             name = "Acid Blend",
             type = IngredientType.OTHER,
             category = "Acid",
             description = "Tartaric, malic, and citric acid blend for pH adjustment",
+            beverageTypes = "wine,mead,cider",
             currentStock = 1.0,
             unit = "lbs",
             costPerUnit = 12.00,
             flavorProfile = "Tart, Sharp"
         ),
         Ingredient(
+            id = 18,
             name = "Potassium Metabisulfite",
             type = IngredientType.OTHER,
             category = "Preservative",
             description = "Wine and mead preservative and antioxidant",
+            beverageTypes = "wine,mead,cider",
             currentStock = 0.5,
             unit = "lbs",
             costPerUnit = 8.00,
@@ -371,74 +407,84 @@ class IngredientViewModel @Inject constructor(
     private fun getSampleYeasts() = listOf(
         // Ale Yeasts
         Yeast(
+            id = 1,
             name = "SafAle US-05",
             brand = "Fermentis",
             type = YeastType.ALE,
-            form = com.brewingtracker.data.database.entities.YeastForm.DRY,
-            attenuationRange = "78-82%",
-            temperatureRange = "59-75°F",
+            beverageTypes = "beer",
+            attenuationMin = 78,
+            attenuationMax = 82,
+            temperatureRangeMin = 59,
+            temperatureRangeMax = 75,
             alcoholTolerance = 12.0,
             description = "American ale yeast producing well balanced beers with low diacetyl",
             currentStock = 5,
-            unit = "packets",
             costPerUnit = 3.99
         ),
 
         // Lager Yeasts
         Yeast(
+            id = 2,
             name = "SafLager W-34/70",
             brand = "Fermentis",
             type = YeastType.LAGER,
-            form = com.brewingtracker.data.database.entities.YeastForm.DRY,
-            attenuationRange = "81-85%",
-            temperatureRange = "46-59°F",
+            beverageTypes = "beer",
+            attenuationMin = 81,
+            attenuationMax = 85,
+            temperatureRangeMin = 46,
+            temperatureRangeMax = 59,
             alcoholTolerance = 10.0,
             description = "German lager yeast strain used to produce well-balanced beers",
             currentStock = 4,
-            unit = "packets",
             costPerUnit = 4.49
         ),
 
         // Wine/Mead Yeasts
         Yeast(
+            id = 3,
             name = "EC-1118",
             brand = "Lallemand",
             type = YeastType.CHAMPAGNE,
-            form = com.brewingtracker.data.database.entities.YeastForm.DRY,
-            attenuationRange = "95-100%",
-            temperatureRange = "50-86°F",
+            beverageTypes = "wine,mead,champagne",
+            attenuationMin = 95,
+            attenuationMax = 100,
+            temperatureRangeMin = 50,
+            temperatureRangeMax = 86,
             alcoholTolerance = 18.0,
             description = "Champagne yeast with excellent alcohol tolerance, ideal for high gravity wines and meads",
             currentStock = 6,
-            unit = "packets",
             costPerUnit = 2.99
         ),
 
         Yeast(
+            id = 4,
             name = "D47",
             brand = "Lallemand",
             type = YeastType.WINE,
-            form = com.brewingtracker.data.database.entities.YeastForm.DRY,
-            attenuationRange = "85-95%",
-            temperatureRange = "59-68°F",
+            beverageTypes = "wine,mead",
+            attenuationMin = 85,
+            attenuationMax = 95,
+            temperatureRangeMin = 59,
+            temperatureRangeMax = 68,
             alcoholTolerance = 15.0,
             description = "Low foaming with complex aroma, perfect for meads and white wines",
             currentStock = 4,
-            unit = "packets",
             costPerUnit = 3.49
         ),
 
         Yeast(
+            id = 5,
             name = "71B-1122",
             brand = "Lallemand",
             type = YeastType.WINE,
-            form = com.brewingtracker.data.database.entities.YeastForm.DRY,
-            attenuationRange = "80-90%",
-            temperatureRange = "59-86°F",
+            beverageTypes = "wine,mead,fruit_wine",
+            attenuationMin = 80,
+            attenuationMax = 90,
+            temperatureRangeMin = 59,
+            temperatureRangeMax = 86,
             alcoholTolerance = 14.0,
             description = "Ideal for young wines, reduces malic acid and enhances fruit flavors",
             currentStock = 3,
-            unit = "packets",
             costPerUnit = 3.49
         )
     )
