@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
         Yeast::class,
         ProjectIngredient::class
     ],
-    version = 1,
+    version = 2,  // Incremented from 1 to 2 due to schema changes (added indices)
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -42,6 +42,7 @@ abstract class BrewingDatabase : RoomDatabase() {
                     "brewing_database"
                 )
                 .addCallback(DatabaseCallback(context))
+                .fallbackToDestructiveMigration()  // Added for development - removes this for production
                 .build()
                 INSTANCE = instance
                 instance
