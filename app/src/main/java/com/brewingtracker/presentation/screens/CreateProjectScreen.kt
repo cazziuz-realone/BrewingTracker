@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,7 +23,7 @@ fun CreateProjectScreen(
     viewModel: ProjectsViewModel = hiltViewModel()
 ) {
     var projectName by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(ProjectType.BEER) }
+    var selectedType by remember { mutableStateOf(BeverageType.BEER) }
     var description by remember { mutableStateOf("") }
     var batchSize by remember { mutableStateOf("") }
     var targetOG by remember { mutableStateOf("") }
@@ -100,7 +100,7 @@ fun CreateProjectScreen(
                             onExpandedChange = { typeExpanded = !typeExpanded }
                         ) {
                             OutlinedTextField(
-                                value = selectedType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                value = selectedType.displayName,
                                 onValueChange = { },
                                 readOnly = true,
                                 label = { Text("Project Type") },
@@ -113,9 +113,9 @@ fun CreateProjectScreen(
                                 expanded = typeExpanded,
                                 onDismissRequest = { typeExpanded = false }
                             ) {
-                                ProjectType.values().forEach { type ->
+                                BeverageType.values().forEach { type ->
                                     DropdownMenuItem(
-                                        text = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                        text = { Text(type.displayName) },
                                         onClick = {
                                             selectedType = type
                                             typeExpanded = false
@@ -216,7 +216,7 @@ fun CreateProjectScreen(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = getProjectTypeDescription(selectedType),
+                            text = getBeverageTypeDescription(selectedType),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -227,14 +227,14 @@ fun CreateProjectScreen(
     }
 }
 
-private fun getProjectTypeDescription(type: ProjectType): String {
+private fun getBeverageTypeDescription(type: BeverageType): String {
     return when (type) {
-        ProjectType.BEER -> "Traditional beer brewing with grains, hops, and yeast. Perfect for ales, lagers, and specialty beers."
-        ProjectType.MEAD -> "Honey-based fermented beverage. Create traditional meads, melomels (with fruit), or experimental varieties."
-        ProjectType.WINE -> "Grape or fruit wine production. Track fermentation, aging, and clarification processes."
-        ProjectType.CIDER -> "Apple or pear-based alcoholic beverages. Monitor fermentation and carbonation levels."
-        ProjectType.KOMBUCHA -> "Fermented tea beverage with SCOBY. Track SCOBY health and fermentation progress."
-        ProjectType.WATER_KEFIR -> "Probiotic fermented beverage using water kefir grains. Monitor grain health and flavoring."
-        ProjectType.OTHER -> "Custom brewing project. Use for experimental fermentations or unique beverage types."
+        BeverageType.BEER -> "Traditional beer brewing with grains, hops, and yeast. Perfect for ales, lagers, and specialty beers."
+        BeverageType.MEAD -> "Honey-based fermented beverage. Create traditional meads, melomels (with fruit), or experimental varieties."
+        BeverageType.WINE -> "Grape or fruit wine production. Track fermentation, aging, and clarification processes."
+        BeverageType.CIDER -> "Apple or pear-based alcoholic beverages. Monitor fermentation and carbonation levels."
+        BeverageType.KOMBUCHA -> "Fermented tea beverage with SCOBY. Track SCOBY health and fermentation progress."
+        BeverageType.WATER_KEFIR -> "Probiotic fermented beverage using water kefir grains. Monitor grain health and flavoring."
+        BeverageType.OTHER -> "Custom brewing project. Use for experimental fermentations or unique beverage types."
     }
 }
