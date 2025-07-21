@@ -37,7 +37,7 @@ interface ProjectIngredientDao {
     suspend fun removeIngredientFromProject(projectId: String, ingredientId: Int)
 }
 
-// Data class for joined query results
+// Data class for joined query results - must include ALL columns from pi.* selection
 data class ProjectIngredientWithDetails(
     val id: Int,
     val projectId: String,
@@ -46,6 +46,7 @@ data class ProjectIngredientWithDetails(
     val unit: String,
     val additionTime: String?,
     val notes: String?,
+    val createdAt: Long,  // Added missing field from project_ingredients table
     val ingredientName: String,
     val ingredientType: String
 )
