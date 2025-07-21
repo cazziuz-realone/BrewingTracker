@@ -11,7 +11,7 @@ data class Project(
     @PrimaryKey
     val id: String,
     val name: String,
-    val type: ProjectType,
+    val type: BeverageType,  // Changed from ProjectType to BeverageType
     val description: String? = null,
     val startDate: Long,
     val targetFinishDate: Long? = null,
@@ -52,23 +52,6 @@ data class Project(
     val tastingNotes: String? = null
 ) : Parcelable
 
-enum class ProjectType {
-    BEER,
-    MEAD,
-    WINE,
-    CIDER,
-    KOMBUCHA,
-    WATER_KEFIR,
-    OTHER
-}
-
-enum class ProjectPhase {
-    PLANNING,
-    BREWING,
-    PRIMARY_FERMENTATION,
-    SECONDARY_FERMENTATION,
-    CONDITIONING,
-    CARBONATING,
-    COMPLETED,
-    ARCHIVED
-}
+// REMOVED: Duplicate enum definitions that conflicted with separate enum files
+// ProjectPhase is now defined in ProjectPhase.kt
+// BeverageType is now defined in BeverageType.kt
