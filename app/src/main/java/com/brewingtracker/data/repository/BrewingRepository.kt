@@ -72,7 +72,7 @@ class BrewingRepository @Inject constructor(
     
     fun getAllActiveProjects(): Flow<List<Project>> = projectDao.getAllActiveProjects()
     
-    fun getProjectsByType(type: ProjectType): Flow<List<Project>> = 
+    fun getProjectsByType(type: BeverageType): Flow<List<Project>> = 
         projectDao.getProjectsByType(type)
     
     fun getActiveIncompleteProjects(): Flow<List<Project>> = 
