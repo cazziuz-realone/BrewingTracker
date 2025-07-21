@@ -6,10 +6,10 @@ import com.brewingtracker.data.database.entities.*
 class Converters {
     
     @TypeConverter
-    fun fromProjectType(type: ProjectType): String = type.name
+    fun fromBeverageType(type: BeverageType): String = type.name
     
     @TypeConverter
-    fun toProjectType(type: String): ProjectType = ProjectType.valueOf(type)
+    fun toBeverageType(type: String): BeverageType = BeverageType.valueOf(type)
     
     @TypeConverter
     fun fromProjectPhase(phase: ProjectPhase): String = phase.name
