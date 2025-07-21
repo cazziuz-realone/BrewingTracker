@@ -3,7 +3,7 @@ package com.brewingtracker.data.database.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import com.brewingtracker.data.database.entities.Project
-import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.database.entities.ProjectPhase
 
 @Dao
@@ -12,7 +12,7 @@ interface ProjectDao {
     fun getAllActiveProjects(): Flow<List<Project>>
 
     @Query("SELECT * FROM projects WHERE type = :type AND isActive = 1 ORDER BY startDate DESC")
-    fun getProjectsByType(type: ProjectType): Flow<List<Project>>
+    fun getProjectsByType(type: BeverageType): Flow<List<Project>>
 
     @Query("SELECT * FROM projects WHERE id = :id")
     suspend fun getProjectById(id: String): Project?
