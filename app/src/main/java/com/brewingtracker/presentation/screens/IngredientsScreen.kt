@@ -52,7 +52,7 @@ fun IngredientsScreen(
                     onClick = { viewModel.toggleShowInStockOnly() }
                 ) {
                     Icon(
-                        imageVector = if (showInStockOnly) Icons.Default.Inventory else Icons.Default.InventoryOutlined,
+                        imageVector = if (showInStockOnly) Icons.Default.Inventory else Icons.Default.Store,
                         contentDescription = if (showInStockOnly) "Show all ingredients" else "Show in-stock only",
                         tint = if (showInStockOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -62,7 +62,7 @@ fun IngredientsScreen(
                     onClick = { viewModel.clearFilters() }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FilterListOff,
+                        imageVector = Icons.Default.Clear,  // Changed from FilterListOff to Clear
                         contentDescription = "Clear filters"
                     )
                 }
@@ -166,7 +166,7 @@ fun IngredientsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.SearchOff,
+                        imageVector = Icons.Default.Search,  // Changed from SearchOff to Search
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
