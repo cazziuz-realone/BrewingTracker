@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.data.database.entities.Project
-import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 import com.brewingtracker.presentation.viewmodel.IngredientsViewModel
 import java.text.SimpleDateFormat
@@ -172,11 +172,11 @@ fun DashboardScreen(
                     AssistChip(
                         onClick = { /* Filter by type */ },
                         label = { 
-                            Text("${type.name.lowercase().replaceFirstChar { it.uppercase() }}: ${projects.size}")
+                            Text("${type.displayName}: ${projects.size}")
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = getProjectTypeIcon(type),
+                                imageVector = getBeverageTypeIcon(type),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -250,7 +250,7 @@ fun RecentProjectCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = getProjectTypeIcon(project.type),
+                    imageVector = getBeverageTypeIcon(project.type),
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -267,7 +267,7 @@ fun RecentProjectCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = project.currentPhase.name.replace("_", " "),
+                text = project.currentPhase.displayName,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -320,14 +320,14 @@ fun QuickActionCard(
     }
 }
 
-private fun getProjectTypeIcon(type: ProjectType): ImageVector {
+private fun getBeverageTypeIcon(type: BeverageType): ImageVector {
     return when (type) {
-        ProjectType.BEER -> Icons.Default.LocalBar
-        ProjectType.MEAD -> Icons.Default.LocalFlorist
-        ProjectType.WINE -> Icons.Default.LocalBar
-        ProjectType.CIDER -> Icons.Default.LocalFlorist
-        ProjectType.KOMBUCHA -> Icons.Default.Science
-        ProjectType.WATER_KEFIR -> Icons.Default.WaterDrop
-        ProjectType.OTHER -> Icons.Default.Science
+        BeverageType.BEER -> Icons.Default.LocalBar
+        BeverageType.MEAD -> Icons.Default.LocalFlorist  
+        BeverageType.WINE -> Icons.Default.LocalDining   // Changed from LocalBar to avoid confusion
+        BeverageType.CIDER -> Icons.Default.Apple        // Changed to a more appropriate icon
+        BeverageType.KOMBUCHA -> Icons.Default.Science
+        BeverageType.WATER_KEFIR -> Icons.Default.WaterDrop
+        BeverageType.OTHER -> Icons.Default.Science
     }
 }
