@@ -324,8 +324,8 @@ private fun getBeverageTypeIcon(type: BeverageType): ImageVector {
     return when (type) {
         BeverageType.BEER -> Icons.Default.LocalBar
         BeverageType.MEAD -> Icons.Default.LocalFlorist  
-        BeverageType.WINE -> Icons.Default.LocalDining   // Changed from LocalBar to avoid confusion
-        BeverageType.CIDER -> Icons.Default.Apple        // Changed to a more appropriate icon
+        BeverageType.WINE -> Icons.Default.LocalDining   
+        BeverageType.CIDER -> Icons.Default.Eco          // Changed from Apple to Eco (more generic)
         BeverageType.KOMBUCHA -> Icons.Default.Science
         BeverageType.WATER_KEFIR -> Icons.Default.WaterDrop
         BeverageType.OTHER -> Icons.Default.Science
