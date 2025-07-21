@@ -2,6 +2,7 @@ package com.brewingtracker.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -19,6 +20,11 @@ import androidx.room.PrimaryKey
             childColumns = ["ingredientId"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["projectId"]),
+        Index(value = ["ingredientId"]),
+        Index(value = ["projectId", "ingredientId"], unique = true)
     ]
 )
 data class ProjectIngredient(
