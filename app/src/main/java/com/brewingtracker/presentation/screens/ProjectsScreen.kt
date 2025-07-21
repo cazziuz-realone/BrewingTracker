@@ -2,6 +2,7 @@ package com.brewingtracker.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.data.database.entities.Project
 import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.ProjectPhase
 import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -262,7 +264,7 @@ private fun ProjectCard(
             }
 
             // Progress bar
-            val phases = com.brewingtracker.data.database.entities.ProjectPhase.values()
+            val phases = ProjectPhase.values()
             val currentIndex = phases.indexOf(project.currentPhase)
 
             Spacer(modifier = Modifier.height(8.dp))
