@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.data.database.entities.Project
-import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.database.entities.ProjectPhase
 import com.brewingtracker.presentation.viewmodel.ProjectsViewModel
 import java.text.SimpleDateFormat
@@ -87,11 +87,11 @@ fun ProjectsScreen(
                     label = { Text("All") }
                 )
             }
-            items(ProjectType.values()) { type ->
+            items(BeverageType.values()) { type ->
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { viewModel.filterByType(type) },
-                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    label = { Text(type.displayName) }
                 )
             }
         }
@@ -191,7 +191,7 @@ private fun ProjectCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = project.type.name.lowercase().replaceFirstChar { it.uppercase() },
+                        text = project.type.displayName,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
@@ -222,7 +222,7 @@ private fun ProjectCard(
                         onClick = { },
                         label = {
                             Text(
-                                text = project.currentPhase.name.replace("_", " "),
+                                text = project.currentPhase.displayName,
                                 fontSize = 12.sp
                             )
                         },
