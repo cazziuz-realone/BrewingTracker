@@ -116,15 +116,8 @@ object BrewingCalculations {
         // CO2 needed
         val co2Needed = targetCO2 - residualCO2
         
-        // Sugar needed (varies by sugar type)
-        val sugarFactor = when (sugarType) {
-            SugarType.CORN_SUGAR -> 4.0  // Most efficient
-            SugarType.TABLE_SUGAR -> 3.6
-            SugarType.DME -> 5.3  // Dry Malt Extract
-            SugarType.HONEY -> 3.8
-        }
-        
-        val sugarOunces = (co2Needed * beerVolume) / sugarFactor
+        // Sugar needed using the factor from SugarType enum
+        val sugarOunces = (co2Needed * beerVolume) / sugarType.factor
         return round(sugarOunces * 100) / 100
     }
 
@@ -203,9 +196,4 @@ object BrewingCalculations {
     }
 }
 
-enum class SugarType {
-    CORN_SUGAR,
-    TABLE_SUGAR,
-    DME,
-    HONEY
-}
+// REMOVED: Duplicate SugarType enum - using the one from BrewCalculator.kt with factor and displayName properties
