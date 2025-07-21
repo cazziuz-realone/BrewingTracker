@@ -107,16 +107,16 @@ fun BrewingNavigation(
                     onNavigateBack = { navController.popBackStack() }
                 )
                 "ibu" -> IBUCalculatorScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() }
                 )
                 "color" -> ColorCalculatorScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() }
                 )
                 "priming" -> PrimingSugarCalculatorScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() }
                 )
                 "brix" -> BrixConverterScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() }
                 )
                 else -> {
                     // Fallback to calculators list
