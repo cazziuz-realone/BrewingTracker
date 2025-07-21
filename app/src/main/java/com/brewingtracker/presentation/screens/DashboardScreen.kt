@@ -323,9 +323,9 @@ fun QuickActionCard(
 private fun getProjectTypeIcon(type: ProjectType): ImageVector {
     return when (type) {
         ProjectType.BEER -> Icons.Default.LocalBar
-        ProjectType.MEAD -> Icons.Default.Honey
-        ProjectType.WINE -> Icons.Default.Wine
-        ProjectType.CIDER -> Icons.Default.Apple
+        ProjectType.MEAD -> Icons.Default.LocalFlorist
+        ProjectType.WINE -> Icons.Default.LocalBar
+        ProjectType.CIDER -> Icons.Default.LocalFlorist
         ProjectType.KOMBUCHA -> Icons.Default.Science
         ProjectType.WATER_KEFIR -> Icons.Default.WaterDrop
         ProjectType.OTHER -> Icons.Default.Science
