@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brewingtracker.data.database.entities.Project
 import com.brewingtracker.data.database.entities.ProjectPhase
-import com.brewingtracker.data.database.entities.ProjectType
+import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.repository.BrewingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -17,7 +17,7 @@ class ProjectsViewModel @Inject constructor(
     private val repository: BrewingRepository
 ) : ViewModel() {
 
-    private val _selectedProjectType = MutableStateFlow<ProjectType?>(null)
+    private val _selectedProjectType = MutableStateFlow<BeverageType?>(null)
     val selectedProjectType = _selectedProjectType.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -54,7 +54,7 @@ class ProjectsViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    fun filterByType(type: ProjectType?) {
+    fun filterByType(type: BeverageType?) {
         _selectedProjectType.value = type
     }
 
@@ -64,7 +64,7 @@ class ProjectsViewModel @Inject constructor(
 
     fun createProject(
         name: String,
-        type: ProjectType,
+        type: BeverageType,
         description: String? = null,
         batchSize: Double? = null,
         targetOG: Double? = null,
