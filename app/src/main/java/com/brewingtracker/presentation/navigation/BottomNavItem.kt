@@ -19,7 +19,7 @@ val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Projects,
         icon = Icons.Default.List,
-        label = "Projects"
+        label = "Brew"
     ),
     BottomNavItem(
         screen = Screen.Calculators,
@@ -34,6 +34,6 @@ val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Settings,
         icon = Icons.Default.Settings,
-        label = "Settings"
+        label = "More"
     )
 )
