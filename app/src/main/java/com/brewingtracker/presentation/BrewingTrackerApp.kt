@@ -23,6 +23,8 @@ fun BrewingTrackerApp() {
         bottomBar = {
             NavigationBar {
                 bottomNavItems.forEach { item ->
+                    val isSelected = currentRoute == item.screen.route
+                    
                     NavigationBarItem(
                         icon = {
                             Icon(
@@ -33,24 +35,39 @@ fun BrewingTrackerApp() {
                         label = { 
                             Text(
                                 text = item.label,
-                                fontSize = 10.sp, // Reduced from 11.sp for better mobile fit
+                                fontSize = 10.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             ) 
                         },
-                        selected = currentRoute == item.screen.route,
+                        selected = isSelected,
                         onClick = {
-                            // ENHANCED: Better navigation handling
-                            if (currentRoute != item.screen.route) {
-                                navController.navigate(item.screen.route) {
-                                    // Pop up to the start destination to avoid building up a large stack
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
+                            // FIXED: Simplified navigation logic to ensure home button works
+                            if (!isSelected) {
+                                try {
+                                    if (item.screen.route == Screen.Dashboard.route) {
+                                        // Special handling for Dashboard/Home screen
+                                        navController.navigate(Screen.Dashboard.route) {
+                                            // Clear the entire back stack and make Dashboard the only destination
+                                            popUpTo(0) {
+                                                inclusive = true
+                                            }
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        // Standard navigation for other screens
+                                        navController.navigate(item.screen.route) {
+                                            // Pop up to Dashboard to avoid deep back stacks
+                                            popUpTo(Screen.Dashboard.route) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                    // Avoid multiple copies of the same destination
-                                    launchSingleTop = true
-                                    // Restore state when reselecting a previously selected item
-                                    restoreState = true
+                                } catch (e: Exception) {
+                                    // Fallback: simple navigation without options
+                                    navController.navigate(item.screen.route)
                                 }
                             }
                         }
