@@ -25,9 +25,6 @@ class IngredientsViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    private val _showInStockOnly = MutableStateFlow(false)
-    val showInStockOnly = _showInStockOnly.asStateFlow()
-
     val allIngredients = repository.getAllIngredients()
         .stateIn(
             scope = viewModelScope,
@@ -35,22 +32,21 @@ class IngredientsViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    // UPDATED: Removed stock filtering since stock is only shown in detailed view
     val filteredIngredients = combine(
         allIngredients,
         selectedIngredientType,
         selectedBeverageType,
-        searchQuery,
-        showInStockOnly
-    ) { ingredients, type, beverageType, query, inStockOnly ->
+        searchQuery
+    ) { ingredients, type, beverageType, query ->
         ingredients.filter { ingredient ->
             val matchesType = type == null || ingredient.type == type
             val matchesBeverage = beverageType == null || 
                 ingredient.beverageTypes.contains(beverageType, ignoreCase = true)
             val matchesQuery = query.isBlank() || 
                 ingredient.name.contains(query, ignoreCase = true)
-            val matchesStock = !inStockOnly || ingredient.currentStock > 0
             
-            matchesType && matchesBeverage && matchesQuery && matchesStock
+            matchesType && matchesBeverage && matchesQuery
         }
     }.stateIn(
         scope = viewModelScope,
@@ -58,6 +54,7 @@ class IngredientsViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    // KEPT: Still needed for dashboard statistics
     val inStockIngredients = repository.getInStockIngredients()
         .stateIn(
             scope = viewModelScope,
@@ -77,10 +74,7 @@ class IngredientsViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    fun toggleShowInStockOnly() {
-        _showInStockOnly.value = !_showInStockOnly.value
-    }
-
+    // UPDATED: Stock management - only for individual ingredient updates in detailed view
     fun updateIngredientStock(ingredientId: Int, newStock: Double) {
         viewModelScope.launch {
             repository.updateIngredientStock(ingredientId, newStock)
@@ -91,15 +85,15 @@ class IngredientsViewModel @Inject constructor(
         return repository.getIngredientById(id)
     }
 
+    // UPDATED: Removed stock filter from clear filters
     fun clearFilters() {
         _selectedIngredientType.value = null
         _selectedBeverageType.value = null
         _searchQuery.value = ""
-        _showInStockOnly.value = false
     }
 
     // ==========================================
-    // PROJECT INGREDIENT OPERATIONS - NEW
+    // PROJECT INGREDIENT OPERATIONS
     // ==========================================
     
     /**
