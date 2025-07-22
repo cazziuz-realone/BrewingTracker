@@ -201,24 +201,32 @@ private fun ExpandableIngredientCard(
     var isExpanded by remember { mutableStateOf(false) }
     var showStockDialog by remember { mutableStateOf(false) }
 
-    // Get ingredient type icon
+    // Get ingredient type icon - FIXED: Use correct enum values
     val typeIcon = when (ingredient.type) {
         IngredientType.GRAIN -> "🌾"
         IngredientType.HOP -> "🍃"
-        IngredientType.YEAST -> "🧪"
+        IngredientType.FRUIT -> "🍎"
         IngredientType.ADJUNCT -> "🍯"
-        IngredientType.WATER_AGENT -> "💧"
+        IngredientType.SPICE -> "🌶️"
+        IngredientType.YEAST_NUTRIENT -> "🧪"
+        IngredientType.ACID -> "⚗️"
+        IngredientType.WATER_TREATMENT -> "💧"
+        IngredientType.CLARIFIER -> "🔍"
         IngredientType.OTHER -> "📦"
     }
 
-    // Get ingredient type color
+    // Get ingredient type color - FIXED: Use correct enum values
     val typeColor = when (ingredient.type) {
         IngredientType.GRAIN -> MaterialTheme.colorScheme.primaryContainer
         IngredientType.HOP -> MaterialTheme.colorScheme.secondaryContainer
-        IngredientType.YEAST -> MaterialTheme.colorScheme.tertiaryContainer
+        IngredientType.FRUIT -> MaterialTheme.colorScheme.tertiaryContainer
         IngredientType.ADJUNCT -> MaterialTheme.colorScheme.errorContainer
-        IngredientType.WATER_AGENT -> MaterialTheme.colorScheme.surfaceVariant
-        IngredientType.OTHER -> MaterialTheme.colorScheme.outline
+        IngredientType.SPICE -> MaterialTheme.colorScheme.surfaceVariant
+        IngredientType.YEAST_NUTRIENT -> MaterialTheme.colorScheme.primaryContainer
+        IngredientType.ACID -> MaterialTheme.colorScheme.errorContainer
+        IngredientType.WATER_TREATMENT -> MaterialTheme.colorScheme.secondaryContainer
+        IngredientType.CLARIFIER -> MaterialTheme.colorScheme.tertiaryContainer
+        IngredientType.OTHER -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     Card(
@@ -320,7 +328,7 @@ private fun ExpandableIngredientCard(
                 Column {
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    Divider()
+                    HorizontalDivider()
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -398,7 +406,7 @@ private fun ExpandableIngredientCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    Divider()
+                    HorizontalDivider()
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
