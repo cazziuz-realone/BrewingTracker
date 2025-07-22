@@ -14,7 +14,7 @@ val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Dashboard,
         icon = Icons.Default.Home,
-        label = "Dashboard"
+        label = "Home"
     ),
     BottomNavItem(
         screen = Screen.Projects,
@@ -24,12 +24,12 @@ val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Calculators,
         icon = Icons.Default.Calculate,
-        label = "Calculators"
+        label = "Calc"
     ),
     BottomNavItem(
         screen = Screen.Ingredients,
         icon = Icons.Default.Inventory,
-        label = "Ingredients"
+        label = "Stock"
     ),
     BottomNavItem(
         screen = Screen.Settings,
