@@ -247,7 +247,8 @@ class CalculatorViewModel @Inject constructor() : ViewModel() {
         calculateWaterAmounts()
     }
 
-    fun updateBoilTime(value: String) {
+    // FIXED: Renamed from updateBoilTime to updateWaterBoilTime to avoid conflicts
+    fun updateWaterBoilTime(value: String) {
         _waterState.value = _waterState.value.copy(boilTime = value)
         calculateWaterAmounts()
     }
