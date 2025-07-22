@@ -71,6 +71,31 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Delete a project - NEW FUNCTIONALITY
+     */
+    fun deleteProject(projectId: String) {
+        viewModelScope.launch {
+            try {
+                // First, remove all project ingredients
+                repository.removeAllIngredientsFromProject(projectId)
+                
+                // Then delete the project
+                projectDao.deleteProject(projectId)
+                
+                _uiState.value = _uiState.value.copy(
+                    showSuccess = true,
+                    successMessage = "Project deleted successfully!"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    showError = true,
+                    errorMessage = "Failed to delete project: ${e.message}"
+                )
+            }
+        }
+    }
+
     // Fixed: This should return a reactive Flow
     fun getProjectById(projectId: String): Flow<Project?> {
         return allProjects.map { projectList ->
@@ -95,6 +120,33 @@ class ProjectViewModel @Inject constructor(
     fun removeIngredientFromProject(projectId: String, ingredientId: Int) {
         viewModelScope.launch {
             repository.removeIngredientFromProject(projectId, ingredientId)
+        }
+    }
+
+    /**
+     * Update ingredient quantity and unit in project - NEW FUNCTIONALITY
+     */
+    fun updateProjectIngredient(
+        projectId: String,
+        ingredientId: Int,
+        quantity: Double,
+        unit: String,
+        additionTime: String? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.updateProjectIngredient(projectId, ingredientId, quantity, unit, additionTime)
+                
+                _uiState.value = _uiState.value.copy(
+                    showSuccess = true,
+                    successMessage = "Ingredient updated successfully!"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    showError = true,
+                    errorMessage = "Failed to update ingredient: ${e.message}"
+                )
+            }
         }
     }
 
