@@ -25,6 +25,10 @@ interface IngredientDao {
     @Query("SELECT * FROM ingredients WHERE currentStock > 0 ORDER BY name ASC")
     fun getInStockIngredients(): Flow<List<Ingredient>>
 
+    // NEW: Get ingredient count for database initialization check
+    @Query("SELECT COUNT(*) FROM ingredients")
+    suspend fun getIngredientCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIngredient(ingredient: Ingredient): Long
 
