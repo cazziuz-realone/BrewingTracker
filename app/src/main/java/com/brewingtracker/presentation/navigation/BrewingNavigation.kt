@@ -1,7 +1,12 @@
 package com.brewingtracker.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,35 +24,22 @@ fun BrewingNavigation(
         startDestination = Screen.Dashboard.route,
         modifier = modifier
     ) {
-        // Dashboard/Home Screen - FIXED: Enhanced error handling
+        // Dashboard/Home Screen - FIXED: Removed try-catch around composable
         composable(Screen.Dashboard.route) {
-            try {
-                DashboardScreen(
-                    onNavigateToProjects = {
-                        navController.navigate(Screen.Projects.route)
-                    },
-                    onNavigateToCalculators = {
-                        navController.navigate(Screen.Calculators.route)
-                    },
-                    onNavigateToIngredients = {
-                        navController.navigate(Screen.Ingredients.route)
-                    },
-                    onNavigateToProjectDetail = { projectId ->
-                        navController.navigate(Screen.ProjectDetail.createRoute(projectId))
-                    }
-                )
-            } catch (e: Exception) {
-                // Fallback: Simple text screen if DashboardScreen fails
-                androidx.compose.foundation.layout.Box(
-                    modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "Welcome to Brewing Tracker\nHome Screen Loading...",
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+            DashboardScreen(
+                onNavigateToProjects = {
+                    navController.navigate(Screen.Projects.route)
+                },
+                onNavigateToCalculators = {
+                    navController.navigate(Screen.Calculators.route)
+                },
+                onNavigateToIngredients = {
+                    navController.navigate(Screen.Ingredients.route)
+                },
+                onNavigateToProjectDetail = { projectId ->
+                    navController.navigate(Screen.ProjectDetail.createRoute(projectId))
                 }
-            }
+            )
         }
 
         // Projects Screen
