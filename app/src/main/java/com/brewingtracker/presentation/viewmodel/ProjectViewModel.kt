@@ -79,19 +79,15 @@ class ProjectViewModel @Inject constructor(
     }
 
     // ==========================================
-    // PROJECT INGREDIENT OPERATIONS - NEW
+    // PROJECT INGREDIENT OPERATIONS - FIXED
     // ==========================================
     
     /**
      * Get project ingredients with full ingredient details
+     * FIXED: Removed stateIn() to prevent conflicting initial values and flickering
      */
     fun getProjectIngredientsWithDetails(projectId: String) = 
         repository.getProjectIngredientsWithDetails(projectId)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = emptyList()
-            )
 
     /**
      * Remove an ingredient from the project
