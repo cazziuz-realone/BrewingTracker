@@ -43,6 +43,15 @@ fun ProjectDetailScreen(
 
     // State for delete confirmation dialog
     var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    // State for ingredient editing dialog - NEW
+    var editingIngredient by remember { mutableStateOf<ProjectIngredientWithDetails?>(null) }
+    
+    // State for reading input dialog - NEW
+    var showReadingDialog by remember { mutableStateOf(false) }
+    
+    // State for photo selection dialog - NEW
+    var showPhotoDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -204,19 +213,19 @@ fun ProjectDetailScreen(
                 }
             }
 
-            // Project Ingredients - ENHANCED SECTION
+            // Project Ingredients - ENHANCED SECTION WITH EDITING
             ProjectIngredientsCard(
                 ingredients = projectIngredients,
                 onAddIngredientsClick = onAddIngredientsClick,
                 onRemoveIngredient = { ingredientId ->
                     viewModel.removeIngredientFromProject(proj.id, ingredientId)
                 },
-                onEditIngredient = { ingredientId ->
-                    // TODO: Navigate to edit ingredient screen
+                onEditIngredient = { ingredient ->  // ENHANCED: Pass full ingredient object
+                    editingIngredient = ingredient
                 }
             )
 
-            // Quick Actions - FIXED BUTTON SHAPES
+            // Quick Actions - ENHANCED WITH FUNCTIONALITY
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -259,12 +268,12 @@ fun ProjectDetailScreen(
                             )
                         }
 
-                        // Reading Action
+                        // Reading Action - ENHANCED WITH FUNCTIONALITY
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             FloatingActionButton(
-                                onClick = { /* TODO: Add gravity reading */ },
+                                onClick = { showReadingDialog = true },  // ENHANCED: Added functionality
                                 modifier = Modifier.size(56.dp),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -284,12 +293,12 @@ fun ProjectDetailScreen(
                             )
                         }
 
-                        // Photo Action
+                        // Photo Action - ENHANCED WITH FUNCTIONALITY
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             FloatingActionButton(
-                                onClick = { /* TODO: Add photo */ },
+                                onClick = { showPhotoDialog = true },  // ENHANCED: Added functionality
                                 modifier = Modifier.size(56.dp),
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
@@ -343,6 +352,7 @@ fun ProjectDetailScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
+                                viewModel.deleteProject(proj.id)  // ENHANCED: Call delete method
                                 onDeleteProject(proj.id)
                                 showDeleteDialog = false
                             }
@@ -357,6 +367,47 @@ fun ProjectDetailScreen(
                     }
                 )
             }
+            
+            // NEW: Ingredient Edit Dialog
+            editingIngredient?.let { ingredient ->
+                EditIngredientDialog(
+                    ingredient = ingredient,
+                    onDismiss = { editingIngredient = null },
+                    onUpdate = { quantity, unit, additionTime ->
+                        viewModel.updateProjectIngredient(
+                            projectId = proj.id,
+                            ingredientId = ingredient.ingredientId,
+                            quantity = quantity,
+                            unit = unit,
+                            additionTime = additionTime
+                        )
+                        editingIngredient = null
+                    }
+                )
+            }
+            
+            // NEW: Reading Input Dialog
+            if (showReadingDialog) {
+                ReadingInputDialog(
+                    onDismiss = { showReadingDialog = false },
+                    onSubmit = { gravity, temperature, notes ->
+                        // TODO: Save gravity reading to database
+                        showReadingDialog = false
+                    }
+                )
+            }
+            
+            // NEW: Photo Selection Dialog  
+            if (showPhotoDialog) {
+                PhotoSelectionDialog(
+                    onDismiss = { showPhotoDialog = false },
+                    onPhotoSelected = { photoPath ->
+                        // TODO: Save photo to project
+                        showPhotoDialog = false
+                    }
+                )
+            }
+
         } else {
             // Loading state
             Box(
@@ -369,12 +420,151 @@ fun ProjectDetailScreen(
     }
 }
 
+// NEW: Edit Ingredient Dialog
+@Composable
+private fun EditIngredientDialog(
+    ingredient: ProjectIngredientWithDetails,
+    onDismiss: () -> Unit,
+    onUpdate: (Double, String, String?) -> Unit
+) {
+    var quantity by remember { mutableStateOf(ingredient.quantity.toString()) }
+    var unit by remember { mutableStateOf(ingredient.unit) }
+    var additionTime by remember { mutableStateOf(ingredient.additionTime ?: "") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit ${ingredient.ingredientName}") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = quantity,
+                    onValueChange = { quantity = it },
+                    label = { Text("Quantity") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = unit,
+                    onValueChange = { unit = it },
+                    label = { Text("Unit") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = additionTime,
+                    onValueChange = { additionTime = it },
+                    label = { Text("Addition Time (optional)") },
+                    placeholder = { Text("e.g., 60 min boil, dry hop") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    quantity.toDoubleOrNull()?.let { qty ->
+                        onUpdate(qty, unit, additionTime.takeIf { it.isNotBlank() })
+                    }
+                }
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+// NEW: Reading Input Dialog
+@Composable
+private fun ReadingInputDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (Double, Double?, String?) -> Unit
+) {
+    var gravity by remember { mutableStateOf("") }
+    var temperature by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Gravity Reading") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = gravity,
+                    onValueChange = { gravity = it },
+                    label = { Text("Specific Gravity") },
+                    placeholder = { Text("1.050") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = temperature,
+                    onValueChange = { temperature = it },
+                    label = { Text("Temperature (°F)") },
+                    placeholder = { Text("68") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notes (optional)") },
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    gravity.toDoubleOrNull()?.let { sg ->
+                        val temp = temperature.toDoubleOrNull()
+                        val readingNotes = notes.takeIf { it.isNotBlank() }
+                        onSubmit(sg, temp, readingNotes)
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+// NEW: Photo Selection Dialog (placeholder)
+@Composable
+private fun PhotoSelectionDialog(
+    onDismiss: () -> Unit,
+    onPhotoSelected: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Photo") },
+        text = { 
+            Text("Photo functionality will be available in a future update. For now, you can take photos manually and add them to your project notes.")
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
+}
+
 @Composable
 private fun ProjectIngredientsCard(
     ingredients: List<ProjectIngredientWithDetails>,
     onAddIngredientsClick: () -> Unit,
     onRemoveIngredient: (Int) -> Unit,
-    onEditIngredient: (Int) -> Unit,
+    onEditIngredient: (ProjectIngredientWithDetails) -> Unit,  // ENHANCED: Pass full ingredient
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -453,7 +643,7 @@ private fun ProjectIngredientsCard(
                             IngredientItem(
                                 ingredient = ingredient,
                                 onRemove = { onRemoveIngredient(ingredient.ingredientId) },
-                                onEdit = { onEditIngredient(ingredient.ingredientId) }
+                                onEdit = { onEditIngredient(ingredient) }  // ENHANCED: Pass full ingredient
                             )
                         }
                     }
