@@ -1,5 +1,9 @@
 package com.brewingtracker.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,7 +32,6 @@ fun IngredientsScreen(
     val selectedType by viewModel.selectedIngredientType.collectAsStateWithLifecycle()
     val selectedBeverageType by viewModel.selectedBeverageType.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val showInStockOnly by viewModel.showInStockOnly.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -47,25 +50,13 @@ fun IngredientsScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Row {
-                IconButton(
-                    onClick = { viewModel.toggleShowInStockOnly() }
-                ) {
-                    Icon(
-                        imageVector = if (showInStockOnly) Icons.Default.Inventory else Icons.Default.Store,
-                        contentDescription = if (showInStockOnly) "Show all ingredients" else "Show in-stock only",
-                        tint = if (showInStockOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                IconButton(
-                    onClick = { viewModel.clearFilters() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,  // Changed from FilterListOff to Clear
-                        contentDescription = "Clear filters"
-                    )
-                }
+            IconButton(
+                onClick = { viewModel.clearFilters() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Clear filters"
+                )
             }
         }
 
@@ -166,7 +157,7 @@ fun IngredientsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Search,  // Changed from SearchOff to Search
+                        imageVector = Icons.Default.Search,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -189,7 +180,7 @@ fun IngredientsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(ingredients) { ingredient ->
-                    IngredientCard(
+                    ExpandableIngredientCard(
                         ingredient = ingredient,
                         onStockUpdate = { newStock ->
                             viewModel.updateIngredientStock(ingredient.id, newStock)
@@ -203,31 +194,66 @@ fun IngredientsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun IngredientCard(
+private fun ExpandableIngredientCard(
     ingredient: Ingredient,
     onStockUpdate: (Double) -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
     var showStockDialog by remember { mutableStateOf(false) }
 
+    // Get ingredient type icon
+    val typeIcon = when (ingredient.type) {
+        IngredientType.GRAIN -> "🌾"
+        IngredientType.HOP -> "🍃"
+        IngredientType.YEAST -> "🧪"
+        IngredientType.ADJUNCT -> "🍯"
+        IngredientType.WATER_AGENT -> "💧"
+        IngredientType.OTHER -> "📦"
+    }
+
+    // Get ingredient type color
+    val typeColor = when (ingredient.type) {
+        IngredientType.GRAIN -> MaterialTheme.colorScheme.primaryContainer
+        IngredientType.HOP -> MaterialTheme.colorScheme.secondaryContainer
+        IngredientType.YEAST -> MaterialTheme.colorScheme.tertiaryContainer
+        IngredientType.ADJUNCT -> MaterialTheme.colorScheme.errorContainer
+        IngredientType.WATER_AGENT -> MaterialTheme.colorScheme.surfaceVariant
+        IngredientType.OTHER -> MaterialTheme.colorScheme.outline
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { isExpanded = !isExpanded }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Collapsed view - Always visible
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = ingredient.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = typeIcon,
+                            fontSize = 20.sp
+                        )
+                        Text(
+                            text = ingredient.name,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
                     
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -242,7 +268,7 @@ private fun IngredientCard(
                                 )
                             },
                             colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                containerColor = typeColor
                             )
                         )
                         
@@ -252,65 +278,163 @@ private fun IngredientCard(
                             fontSize = 12.sp
                         )
                     }
+
+                    // Basic brewing characteristics in collapsed view
+                    val basicCharacteristics = buildList {
+                        ingredient.colorLovibond?.let { color ->
+                            add("${String.format("%.1f", color)}°L")
+                        }
+                        ingredient.alphaAcidPercentage?.let { alpha ->
+                            add("${String.format("%.1f", alpha)}% AA")
+                        }
+                        ingredient.ppgExtract?.let { ppg ->
+                            add("${String.format("%.0f", ppg)} PPG")
+                        }
+                    }
+
+                    if (basicCharacteristics.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = basicCharacteristics.joinToString(" • "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    TextButton(
-                        onClick = { showStockDialog = true }
-                    ) {
-                        Text("Stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}")
-                    }
+                // Expand/Collapse icon
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Expanded view - Only visible when expanded
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
                     
-                    if (ingredient.currentStock > 0) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "In stock",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                    Divider()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Description
+                    ingredient.description?.let { description ->
+                        Text(
+                            text = "Description",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Out of stock",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(16.dp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Detailed brewing characteristics
+                    Text(
+                        text = "Brewing Characteristics",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val detailedCharacteristics = buildList {
+                        ingredient.colorLovibond?.let { color ->
+                            add("Color" to "${String.format("%.1f", color)}°L")
+                        }
+                        ingredient.alphaAcidPercentage?.let { alpha ->
+                            add("Alpha Acids" to "${String.format("%.1f", alpha)}%")
+                        }
+                        ingredient.ppgExtract?.let { ppg ->
+                            add("Extract Potential" to "${String.format("%.0f", ppg)} PPG")
+                        }
+                        ingredient.category?.let { category ->
+                            add("Category" to category)
+                        }
+                    }
+
+                    if (detailedCharacteristics.isNotEmpty()) {
+                        detailedCharacteristics.chunked(2).forEach { row ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                row.forEach { (label, value) ->
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = value,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                // Fill remaining space if odd number of items
+                                if (row.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Divider()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Stock Management Section
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Current Stock",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = { showStockDialog = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Update Stock")
+                        }
                     }
                 }
-            }
-
-            // Ingredient details
-            ingredient.description?.let { desc ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Brewing characteristics
-            val characteristics = buildList {
-                ingredient.colorLovibond?.let { color ->
-                    add("Color: ${String.format("%.1f", color)}°L")
-                }
-                ingredient.alphaAcidPercentage?.let { alpha ->
-                    add("Alpha: ${String.format("%.1f", alpha)}%")
-                }
-                ingredient.ppgExtract?.let { ppg ->
-                    add("Extract: ${String.format("%.0f", ppg)} PPG")
-                }
-            }
-
-            if (characteristics.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = characteristics.joinToString(" • "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
@@ -341,14 +465,19 @@ private fun StockUpdateDialog(
         title = { Text("Update Stock: ${ingredient.name}") },
         text = {
             Column {
-                Text("Current stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}")
+                Text(
+                    text = "Current stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = stockValue,
                     onValueChange = { stockValue = it },
                     label = { Text("New stock amount") },
                     suffix = { Text(ingredient.unit) },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -356,7 +485,9 @@ private fun StockUpdateDialog(
             TextButton(
                 onClick = {
                     stockValue.toDoubleOrNull()?.let { newStock ->
-                        onStockUpdate(newStock)
+                        if (newStock >= 0) {
+                            onStockUpdate(newStock)
+                        }
                     }
                 }
             ) {
