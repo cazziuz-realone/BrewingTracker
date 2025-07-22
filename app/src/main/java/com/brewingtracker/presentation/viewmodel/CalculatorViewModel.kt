@@ -32,6 +32,10 @@ class CalculatorViewModel @Inject constructor() : ViewModel() {
     private val _brixState = MutableStateFlow(BrixConverterState())
     val brixState: StateFlow<BrixConverterState> = _brixState.asStateFlow()
 
+    // Water Calculator State
+    private val _waterState = MutableStateFlow(WaterCalculatorState())
+    val waterState: StateFlow<WaterCalculatorState> = _waterState.asStateFlow()
+
     // ==========================================
     // ABV CALCULATOR FUNCTIONS
     // ==========================================
@@ -214,6 +218,108 @@ class CalculatorViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    // ==========================================
+    // WATER CALCULATOR FUNCTIONS
+    // ==========================================
+
+    fun updateGrainWeight(value: String) {
+        _waterState.value = _waterState.value.copy(grainWeight = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateMashRatio(value: String) {
+        _waterState.value = _waterState.value.copy(mashRatio = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateTotalWater(value: String) {
+        _waterState.value = _waterState.value.copy(totalWater = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateGrainAbsorption(value: String) {
+        _waterState.value = _waterState.value.copy(grainAbsorption = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateBoilOffRate(value: String) {
+        _waterState.value = _waterState.value.copy(boilOffRate = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateBoilTime(value: String) {
+        _waterState.value = _waterState.value.copy(boilTime = value)
+        calculateWaterAmounts()
+    }
+
+    fun updateGrainTemp(value: String) {
+        _waterState.value = _waterState.value.copy(grainTemp = value)
+        calculateStrikeTemp()
+    }
+
+    fun updateTargetMashTemp(value: String) {
+        _waterState.value = _waterState.value.copy(targetMashTemp = value)
+        calculateStrikeTemp()
+    }
+
+    private fun calculateWaterAmounts() {
+        val state = _waterState.value
+        val grainWeight = state.grainWeight.toDoubleOrNull()
+        val mashRatio = state.mashRatio.toDoubleOrNull()
+        val totalWater = state.totalWater.toDoubleOrNull()
+        val grainAbsorption = state.grainAbsorption.toDoubleOrNull()
+        val boilOffRate = state.boilOffRate.toDoubleOrNull()
+        val boilTime = state.boilTime.toDoubleOrNull()
+
+        if (grainWeight != null && grainWeight > 0 && mashRatio != null && mashRatio > 0) {
+            val mashWater = BrewingCalculations.calculateMashWater(grainWeight, mashRatio)
+
+            val spargeWater = if (totalWater != null && totalWater > 0 &&
+                grainAbsorption != null && grainAbsorption > 0 &&
+                boilOffRate != null && boilOffRate > 0 &&
+                boilTime != null && boilTime > 0) {
+                BrewingCalculations.calculateSpargeWater(
+                    totalWater, mashWater, grainWeight, grainAbsorption, boilOffRate, boilTime
+                )
+            } else null
+
+            _waterState.value = state.copy(
+                calculatedMashWater = mashWater,
+                calculatedSpargeWater = spargeWater,
+                isValid = true
+            )
+        } else {
+            _waterState.value = state.copy(
+                calculatedMashWater = null,
+                calculatedSpargeWater = null,
+                isValid = false
+            )
+        }
+    }
+
+    private fun calculateStrikeTemp() {
+        val state = _waterState.value
+        val grainTemp = state.grainTemp.toDoubleOrNull()
+        val targetMashTemp = state.targetMashTemp.toDoubleOrNull()
+        val mashRatio = state.mashRatio.toDoubleOrNull()
+
+        if (grainTemp != null && targetMashTemp != null && mashRatio != null &&
+            grainTemp > 0 && targetMashTemp > grainTemp && mashRatio > 0) {
+            
+            val strikeTemp = BrewingCalculations.calculateStrikeWaterTemp(
+                grainTemp, targetMashTemp, mashRatio
+            )
+            
+            _waterState.value = state.copy(
+                calculatedStrikeTemp = strikeTemp
+            )
+        } else {
+            _waterState.value = state.copy(
+                calculatedStrikeTemp = null
+            )
+        }
+    }
+
     // Reset functions
     fun resetABVCalculator() {
         _abvState.value = ABVCalculatorState()
@@ -229,6 +335,10 @@ class CalculatorViewModel @Inject constructor() : ViewModel() {
 
     fun resetBrixConverter() {
         _brixState.value = BrixConverterState()
+    }
+
+    fun resetWaterCalculator() {
+        _waterState.value = WaterCalculatorState()
     }
 }
 
@@ -282,5 +392,20 @@ data class BrixConverterState(
     val sgValue: String = "",
     val convertedSG: String = "",
     val convertedBrix: String = "",
+    val isValid: Boolean = false
+)
+
+data class WaterCalculatorState(
+    val grainWeight: String = "",
+    val mashRatio: String = "1.25",
+    val totalWater: String = "",
+    val grainAbsorption: String = "0.125",
+    val boilOffRate: String = "1.25", 
+    val boilTime: String = "1.0",
+    val grainTemp: String = "",
+    val targetMashTemp: String = "",
+    val calculatedMashWater: Double? = null,
+    val calculatedSpargeWater: Double? = null,
+    val calculatedStrikeTemp: Double? = null,
     val isValid: Boolean = false
 )
