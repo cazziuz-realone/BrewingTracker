@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.presentation.viewmodel.CalculatorViewModel
+import com.brewingtracker.presentation.viewmodel.WaterCalculatorState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +28,7 @@ fun WaterCalculatorScreen(
     onNavigateBack: () -> Unit,
     viewModel: CalculatorViewModel = hiltViewModel()
 ) {
-    val waterState by viewModel.waterState.collectAsStateWithLifecycle()
+    val waterState by viewModel.waterState.collectAsStateWithLifecycle(initialValue = WaterCalculatorState())
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -172,7 +173,7 @@ fun WaterCalculatorScreen(
 
                     OutlinedTextField(
                         value = waterState.boilTime,
-                        onValueChange = viewModel::updateBoilTime,
+                        onValueChange = viewModel::updateWaterBoilTime, // FIXED: Updated method call
                         label = { Text("Boil Time") },
                         placeholder = { Text("1.0") },
                         modifier = Modifier.fillMaxWidth(),
@@ -256,7 +257,7 @@ fun WaterCalculatorScreen(
 
                         // Total Water Summary
                         val totalWater = waterState.calculatedMashWater!! / 4.0 + (waterState.calculatedSpargeWater ?: 0.0)
-                        Divider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
