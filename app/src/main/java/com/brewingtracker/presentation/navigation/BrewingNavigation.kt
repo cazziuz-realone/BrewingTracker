@@ -25,6 +25,12 @@ fun BrewingNavigation(
                 },
                 onNavigateToCalculators = {
                     navController.navigate(Screen.Calculators.route)
+                },
+                onNavigateToIngredients = {  // ADDED: Missing navigation
+                    navController.navigate(Screen.Ingredients.route)
+                },
+                onNavigateToProjectDetail = { projectId ->  // ADDED: Missing navigation
+                    navController.navigate(Screen.ProjectDetail.createRoute(projectId))
                 }
             )
         }
@@ -73,6 +79,9 @@ fun BrewingNavigation(
                 },
                 onAddIngredientsClick = {
                     navController.navigate(Screen.AddIngredients.createRoute(projectId))
+                },
+                onDeleteProject = { deletedProjectId ->  // ADDED: Project deletion support
+                    navController.popBackStack()  // Navigate back to projects list
                 }
             )
         }

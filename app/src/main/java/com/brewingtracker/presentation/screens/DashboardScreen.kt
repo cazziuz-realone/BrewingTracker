@@ -29,6 +29,8 @@ import java.util.*
 fun DashboardScreen(
     onNavigateToProjects: () -> Unit,
     onNavigateToCalculators: () -> Unit,
+    onNavigateToIngredients: () -> Unit = {},
+    onNavigateToProjectDetail: (String) -> Unit = {},
     projectsViewModel: ProjectsViewModel = hiltViewModel(),
     ingredientsViewModel: IngredientsViewModel = hiltViewModel()
 ) {
@@ -74,7 +76,7 @@ fun DashboardScreen(
                     title = "In Stock",
                     value = inStockIngredients.size.toString(),
                     icon = Icons.Default.Inventory,
-                    onClick = { /* Navigate to ingredients */ }
+                    onClick = onNavigateToIngredients  // FIXED: Added navigation
                 )
             }
         }
@@ -95,7 +97,7 @@ fun DashboardScreen(
                 items(activeProjects.take(3)) { project ->
                     RecentProjectCard(
                         project = project,
-                        onClick = { /* Navigate to project detail */ }
+                        onClick = { onNavigateToProjectDetail(project.id) }  // FIXED: Added navigation
                     )
                 }
             }
@@ -141,7 +143,7 @@ fun DashboardScreen(
                 subtitle = "Manage stock",
                 icon = Icons.Default.Inventory,
                 modifier = Modifier.weight(1f),
-                onClick = { /* Navigate to ingredients */ }
+                onClick = onNavigateToIngredients  // FIXED: Added navigation
             )
 
             QuickActionCard(
