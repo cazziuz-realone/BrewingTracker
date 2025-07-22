@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,12 +33,16 @@ fun ProjectDetailScreen(
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onAddIngredientsClick: () -> Unit = {},
+    onDeleteProject: (String) -> Unit = {},
     viewModel: ProjectViewModel = hiltViewModel()
 ) {
     // Fixed: Added initialValue parameters to collectAsStateWithLifecycle()
     val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle(initialValue = null)
     val projectIngredients by viewModel.getProjectIngredientsWithDetails(projectId).collectAsStateWithLifecycle(initialValue = emptyList())
     val scrollState = rememberScrollState()
+
+    // State for delete confirmation dialog
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -47,7 +53,7 @@ fun ProjectDetailScreen(
         if (project != null) {
             val proj = project!!
 
-            // Header
+            // Header with Delete Option
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -70,11 +76,20 @@ fun ProjectDetailScreen(
                     )
                 }
 
-                IconButton(onClick = onEditClick) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Project"
-                    )
+                Row {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Project"
+                        )
+                    }
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Project",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 
@@ -195,10 +210,13 @@ fun ProjectDetailScreen(
                 onAddIngredientsClick = onAddIngredientsClick,
                 onRemoveIngredient = { ingredientId ->
                     viewModel.removeIngredientFromProject(proj.id, ingredientId)
+                },
+                onEditIngredient = { ingredientId ->
+                    // TODO: Navigate to edit ingredient screen
                 }
             )
 
-            // Quick Actions
+            // Quick Actions - FIXED BUTTON SHAPES
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,38 +227,86 @@ fun ProjectDetailScreen(
                         text = "Quick Actions",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        OutlinedButton(
-                            onClick = onAddIngredientsClick,
-                            modifier = Modifier.weight(1f)
+                        // Ingredients Action
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Ingredients")
+                            FloatingActionButton(
+                                onClick = onAddIngredientsClick,
+                                modifier = Modifier.size(56.dp),
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Add Ingredients",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Ingredients",
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
 
-                        OutlinedButton(
-                            onClick = { /* TODO: Add gravity reading */ },
-                            modifier = Modifier.weight(1f)
+                        // Reading Action
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Default.Science, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Reading")
+                            FloatingActionButton(
+                                onClick = { /* TODO: Add gravity reading */ },
+                                modifier = Modifier.size(56.dp),
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Science,
+                                    contentDescription = "Add Reading",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Reading",
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
 
-                        OutlinedButton(
-                            onClick = { /* TODO: Add photo */ },
-                            modifier = Modifier.weight(1f)
+                        // Photo Action
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Default.Camera, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Photo")
+                            FloatingActionButton(
+                                onClick = { /* TODO: Add photo */ },
+                                modifier = Modifier.size(56.dp),
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Camera,
+                                    contentDescription = "Add Photo",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Photo",
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }
@@ -265,6 +331,32 @@ fun ProjectDetailScreen(
                     }
                 }
             }
+
+            // Delete Confirmation Dialog
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text("Delete Project") },
+                    text = { 
+                        Text("Are you sure you want to delete \"${proj.name}\"? This action cannot be undone.")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onDeleteProject(proj.id)
+                                showDeleteDialog = false
+                            }
+                        ) {
+                            Text("Delete", color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
         } else {
             // Loading state
             Box(
@@ -282,6 +374,7 @@ private fun ProjectIngredientsCard(
     ingredients: List<ProjectIngredientWithDetails>,
     onAddIngredientsClick: () -> Unit,
     onRemoveIngredient: (Int) -> Unit,
+    onEditIngredient: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -351,7 +444,7 @@ private fun ProjectIngredientsCard(
                     }
                 }
                 else -> {
-                    // Enhanced ingredients list with better visual feedback
+                    // Enhanced ingredients list with edit functionality
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -359,7 +452,8 @@ private fun ProjectIngredientsCard(
                         items(ingredients) { ingredient ->
                             IngredientItem(
                                 ingredient = ingredient,
-                                onRemove = { onRemoveIngredient(ingredient.ingredientId) }
+                                onRemove = { onRemoveIngredient(ingredient.ingredientId) },
+                                onEdit = { onEditIngredient(ingredient.ingredientId) }
                             )
                         }
                     }
@@ -384,6 +478,7 @@ private fun ProjectIngredientsCard(
 private fun IngredientItem(
     ingredient: ProjectIngredientWithDetails,
     onRemove: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -468,16 +563,30 @@ private fun IngredientItem(
                 }
             }
             
-            IconButton(
-                onClick = onRemove,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Remove ingredient",
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.error
-                )
+            Row {
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit ingredient",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Remove ingredient",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
