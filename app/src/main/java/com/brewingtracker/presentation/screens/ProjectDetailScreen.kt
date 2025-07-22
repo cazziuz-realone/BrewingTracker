@@ -33,7 +33,8 @@ fun ProjectDetailScreen(
     onAddIngredientsClick: () -> Unit = {},
     viewModel: ProjectViewModel = hiltViewModel()
 ) {
-    val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle(initial = null)
+    // Fixed: Remove parameters from collectAsStateWithLifecycle()
+    val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle()
     val projectIngredients by viewModel.getProjectIngredientsWithDetails(projectId).collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
@@ -188,7 +189,7 @@ fun ProjectDetailScreen(
                 }
             }
 
-            // Project Ingredients - NEW SECTION
+            // Project Ingredients - ENHANCED SECTION
             ProjectIngredientsCard(
                 ingredients = projectIngredients,
                 onAddIngredientsClick = onAddIngredientsClick,
@@ -314,7 +315,7 @@ private fun ProjectIngredientsCard(
 
             when {
                 ingredients.isEmpty() -> {
-                    // Empty state
+                    // Enhanced Empty state
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -322,25 +323,35 @@ private fun ProjectIngredientsCard(
                         Icon(
                             imageVector = Icons.Default.Inventory,
                             contentDescription = null,
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "No ingredients added yet",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Add ingredients to start building your recipe",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(onClick = onAddIngredientsClick) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onAddIngredientsClick,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Add Ingredients")
                         }
                     }
                 }
                 else -> {
-                    // Show ingredients list
+                    // Enhanced ingredients list with better visual feedback
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -353,14 +364,14 @@ private fun ProjectIngredientsCard(
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     
                     OutlinedButton(
                         onClick = onAddIngredientsClick,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("Add More Ingredients")
                     }
                 }
@@ -384,7 +395,7 @@ private fun IngredientItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -392,39 +403,80 @@ private fun IngredientItem(
                 Text(
                     text = ingredient.ingredientName,
                     fontWeight = FontWeight.Medium,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyLarge
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "${String.format("%.1f", ingredient.quantity)} ${ingredient.unit}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = ingredient.ingredientType.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    ingredient.additionTime?.let { time ->
+                    // Quantity and unit
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Scale,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                         Text(
-                            text = time,
+                            text = "${String.format("%.1f", ingredient.quantity)} ${ingredient.unit}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Ingredient type  
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Category,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = ingredient.ingredientType.lowercase().replaceFirstChar { it.uppercase() },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                    
+                    // Addition time if available
+                    ingredient.additionTime?.let { time ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = time,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
             
             IconButton(
                 onClick = onRemove,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Remove ingredient",
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
