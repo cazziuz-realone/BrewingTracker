@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brewingtracker.data.database.entities.Ingredient
 import com.brewingtracker.data.database.entities.IngredientType
+import com.brewingtracker.data.database.entities.ProjectIngredient
 import com.brewingtracker.data.repository.BrewingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -95,6 +96,48 @@ class IngredientsViewModel @Inject constructor(
         _selectedBeverageType.value = null
         _searchQuery.value = ""
         _showInStockOnly.value = false
+    }
+
+    // ==========================================
+    // PROJECT INGREDIENT OPERATIONS - NEW
+    // ==========================================
+    
+    /**
+     * Add selected ingredients to a project
+     * @param projectId The ID of the project to add ingredients to
+     * @param ingredientIds Set of ingredient IDs to add
+     * @param defaultQuantity Default quantity for each ingredient (can be edited later)
+     * @param defaultUnit Default unit (lbs, oz, etc.)
+     */
+    fun addIngredientsToProject(
+        projectId: String,
+        ingredientIds: Set<Int>,
+        defaultQuantity: Double = 0.0,
+        defaultUnit: String = "lbs"
+    ) {
+        viewModelScope.launch {
+            ingredientIds.forEach { ingredientId ->
+                val projectIngredient = ProjectIngredient(
+                    projectId = projectId,
+                    ingredientId = ingredientId,
+                    quantity = defaultQuantity,
+                    unit = defaultUnit,
+                    additionTime = null, // Can be set later in project detail
+                    notes = null,
+                    createdAt = System.currentTimeMillis()
+                )
+                repository.addIngredientToProject(projectIngredient)
+            }
+        }
+    }
+
+    /**
+     * Add a single ingredient to a project
+     */
+    fun addIngredientToProject(projectIngredient: ProjectIngredient) {
+        viewModelScope.launch {
+            repository.addIngredientToProject(projectIngredient)
+        }
     }
 
     // Helper function to get ingredient types for filtering
