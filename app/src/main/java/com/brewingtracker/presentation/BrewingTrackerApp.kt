@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.brewingtracker.presentation.navigation.BrewingNavigation
@@ -28,7 +30,14 @@ fun BrewingTrackerApp() {
                                 contentDescription = item.label
                             )
                         },
-                        label = { Text(item.label) },
+                        label = { 
+                            Text(
+                                text = item.label,
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            ) 
+                        },
                         selected = currentRoute == item.screen.route,
                         onClick = {
                             navController.navigate(item.screen.route) {
