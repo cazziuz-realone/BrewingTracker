@@ -646,7 +646,7 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
     
     ingredientDao.insertIngredients(sampleIngredients)
     
-    // Enhanced yeast database
+    // Enhanced yeast database - FIXED: Changed LOW_MEDIUM to MEDIUM
     val sampleYeasts = listOf(
         Yeast(
             id = 1,
@@ -684,7 +684,7 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             alcoholTolerance = 11.0,
             attenuationMin = 73,
             attenuationMax = 77,
-            flocculation = FlocculationType.LOW_MEDIUM,
+            flocculation = FlocculationType.MEDIUM,  // FIXED: Changed from LOW_MEDIUM to MEDIUM
             description = "American ale yeast, clean and versatile"
         ),
         Yeast(
