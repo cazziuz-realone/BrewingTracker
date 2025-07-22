@@ -2,6 +2,7 @@ package com.brewingtracker.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.data.database.entities.Project
 import com.brewingtracker.data.database.entities.ProjectPhase
+import com.brewingtracker.data.database.dao.ProjectIngredientWithDetails
 import com.brewingtracker.presentation.viewmodel.ProjectViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,7 +33,8 @@ fun ProjectDetailScreen(
     onAddIngredientsClick: () -> Unit = {},
     viewModel: ProjectViewModel = hiltViewModel()
 ) {
-    val project by viewModel.getProjectById(projectId).collectAsState(initial = null)
+    val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle(initial = null)
+    val projectIngredients by viewModel.getProjectIngredientsWithDetails(projectId).collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     Column(
@@ -185,6 +188,15 @@ fun ProjectDetailScreen(
                 }
             }
 
+            // Project Ingredients - NEW SECTION
+            ProjectIngredientsCard(
+                ingredients = projectIngredients,
+                onAddIngredientsClick = onAddIngredientsClick,
+                onRemoveIngredient = { ingredientId ->
+                    viewModel.removeIngredientFromProject(proj.id, ingredientId)
+                }
+            )
+
             // Quick Actions
             Card(
                 modifier = Modifier
@@ -259,6 +271,161 @@ fun ProjectDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectIngredientsCard(
+    ingredients: List<ProjectIngredientWithDetails>,
+    onAddIngredientsClick: () -> Unit,
+    onRemoveIngredient: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recipe Ingredients",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                
+                if (ingredients.isNotEmpty()) {
+                    Text(
+                        text = "${ingredients.size} ingredient${if (ingredients.size != 1) "s" else ""}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            when {
+                ingredients.isEmpty() -> {
+                    // Empty state
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Inventory,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No ingredients added yet",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(onClick = onAddIngredientsClick) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Ingredients")
+                        }
+                    }
+                }
+                else -> {
+                    // Show ingredients list
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 300.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(ingredients) { ingredient ->
+                            IngredientItem(
+                                ingredient = ingredient,
+                                onRemove = { onRemoveIngredient(ingredient.ingredientId) }
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    OutlinedButton(
+                        onClick = onAddIngredientsClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add More Ingredients")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IngredientItem(
+    ingredient: ProjectIngredientWithDetails,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = ingredient.ingredientName,
+                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "${String.format("%.1f", ingredient.quantity)} ${ingredient.unit}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = ingredient.ingredientType.lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    ingredient.additionTime?.let { time ->
+                        Text(
+                            text = time,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove ingredient",
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }
