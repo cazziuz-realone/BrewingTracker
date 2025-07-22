@@ -77,6 +77,27 @@ fun BrewingNavigation(
             )
         }
 
+        // Add Ingredients Screen - NEWLY ADDED TO FIX CRASH
+        composable(
+            route = Screen.AddIngredients.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("projectId") {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
+            AddIngredientsScreen(
+                projectId = projectId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onIngredientsAdded = {
+                    // Optional: Navigate back to project detail or show success message
+                }
+            )
+        }
+
         // Ingredients Screen
         composable(Screen.Ingredients.route) {
             IngredientsScreen()
