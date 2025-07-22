@@ -9,12 +9,14 @@ import com.brewingtracker.data.database.entities.Project
 import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.database.entities.ProjectPhase
 import com.brewingtracker.data.database.dao.ProjectDao
+import com.brewingtracker.data.repository.BrewingRepository
 import javax.inject.Inject
 import java.util.*
 
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
-    private val projectDao: ProjectDao
+    private val projectDao: ProjectDao,
+    private val repository: BrewingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProjectUiState())
@@ -73,6 +75,30 @@ class ProjectViewModel @Inject constructor(
     fun getProjectById(projectId: String): Flow<Project?> {
         return allProjects.map { projectList ->
             projectList.find { it.id == projectId }
+        }
+    }
+
+    // ==========================================
+    // PROJECT INGREDIENT OPERATIONS - NEW
+    // ==========================================
+    
+    /**
+     * Get project ingredients with full ingredient details
+     */
+    fun getProjectIngredientsWithDetails(projectId: String) = 
+        repository.getProjectIngredientsWithDetails(projectId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+    /**
+     * Remove an ingredient from the project
+     */
+    fun removeIngredientFromProject(projectId: String, ingredientId: Int) {
+        viewModelScope.launch {
+            repository.removeIngredientFromProject(projectId, ingredientId)
         }
     }
 
