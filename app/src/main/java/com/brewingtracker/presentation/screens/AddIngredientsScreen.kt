@@ -28,11 +28,7 @@ fun AddIngredientsScreen(
     viewModel: IngredientsViewModel = hiltViewModel()
 ) {
     val ingredients by viewModel.allIngredients.collectAsStateWithLifecycle()
-    var selectedIngredients by remember { mutableStateOf(setOf<String>()) }
-    
-    LaunchedEffect(projectId) {
-        viewModel.loadIngredients()
-    }
+    var selectedIngredients by remember { mutableStateOf(setOf<Int>()) }
 
     Scaffold(
         topBar = {
@@ -193,7 +189,7 @@ private fun IngredientSelectionCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                if (ingredient.description.isNotEmpty()) {
+                if (!ingredient.description.isNullOrEmpty()) {
                     Text(
                         text = ingredient.description,
                         style = MaterialTheme.typography.bodySmall,
@@ -205,23 +201,23 @@ private fun IngredientSelectionCard(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    if (ingredient.type == IngredientType.GRAIN && ingredient.potential > 0) {
+                    if (ingredient.type == IngredientType.GRAIN && ingredient.ppgExtract != null && ingredient.ppgExtract > 0) {
                         Text(
-                            text = "Potential: ${String.format("%.3f", ingredient.potential)}",
+                            text = "Extract: ${String.format("%.1f", ingredient.ppgExtract)} PPG",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (ingredient.type == IngredientType.HOP && ingredient.alphaAcid > 0) {
+                    if (ingredient.type == IngredientType.HOP && ingredient.alphaAcidPercentage != null && ingredient.alphaAcidPercentage > 0) {
                         Text(
-                            text = "AA: ${String.format("%.1f", ingredient.alphaAcid)}%",
+                            text = "AA: ${String.format("%.1f", ingredient.alphaAcidPercentage)}%",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (ingredient.type == IngredientType.GRAIN && ingredient.lovibond > 0) {
+                    if (ingredient.colorLovibond != null && ingredient.colorLovibond > 0) {
                         Text(
-                            text = "${String.format("%.1f", ingredient.lovibond)}°L",
+                            text = "${String.format("%.1f", ingredient.colorLovibond)}°L",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
