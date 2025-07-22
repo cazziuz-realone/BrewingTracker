@@ -29,7 +29,7 @@ val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Ingredients,
         icon = Icons.Default.Inventory,
-        label = "Stock"
+        label = "Ingredients"
     ),
     BottomNavItem(
         screen = Screen.Settings,
