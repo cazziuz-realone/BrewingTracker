@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,13 +45,13 @@ fun DashboardScreen(
             text = "Brewing Dashboard",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        // Overview Stats
+        // Overview Stats - More compact
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(bottom = 24.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 20.dp)
         ) {
             item {
                 StatCard(
@@ -71,7 +73,6 @@ fun DashboardScreen(
                 StatCard(
                     title = "In Stock",
                     value = inStockIngredients.size.toString(),
-                    subtitle = "ingredients",
                     icon = Icons.Default.Inventory,
                     onClick = { /* Navigate to ingredients */ }
                 )
@@ -89,7 +90,7 @@ fun DashboardScreen(
 
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 20.dp)
             ) {
                 items(activeProjects.take(3)) { project ->
                     RecentProjectCard(
@@ -154,7 +155,7 @@ fun DashboardScreen(
 
         // Project Type Distribution (if there are projects)
         if (activeProjects.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             Text(
                 text = "Project Types",
@@ -193,42 +194,37 @@ fun DashboardScreen(
 fun StatCard(
     title: String,
     value: String,
-    subtitle: String? = null,
     icon: ImageVector,
     onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(140.dp)
+        modifier = Modifier.width(120.dp) // Reduced from 140.dp for better mobile fit
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp), // Reduced from 16.dp
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(20.dp), // Reduced from 24.dp
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
             Text(
                 text = value,
-                fontSize = 20.sp,
+                fontSize = 18.sp, // Reduced from 20.sp
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = title,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = 11.sp, // Reduced from 12.sp
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-            subtitle?.let {
-                Text(
-                    text = it,
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }
@@ -241,7 +237,7 @@ fun RecentProjectCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(200.dp)
+        modifier = Modifier.width(180.dp) // Reduced from 200.dp
     ) {
         Column(
             modifier = Modifier.padding(12.dp)
@@ -260,11 +256,12 @@ fun RecentProjectCard(
                     text = project.name,
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
             
             Text(
                 text = project.currentPhase.displayName,
@@ -296,25 +293,32 @@ fun QuickActionCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(14.dp) // Reduced from 16.dp
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(28.dp), // Reduced from 32.dp
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
             Text(
                 text = title,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp, // Added explicit size
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = subtitle,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = 11.sp, // Reduced from 12.sp
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -325,7 +329,7 @@ private fun getBeverageTypeIcon(type: BeverageType): ImageVector {
         BeverageType.BEER -> Icons.Default.LocalBar
         BeverageType.MEAD -> Icons.Default.LocalFlorist  
         BeverageType.WINE -> Icons.Default.LocalDining   
-        BeverageType.CIDER -> Icons.Default.Eco          // Changed from Apple to Eco (more generic)
+        BeverageType.CIDER -> Icons.Default.Eco          
         BeverageType.KOMBUCHA -> Icons.Default.Science
         BeverageType.WATER_KEFIR -> Icons.Default.WaterDrop
         BeverageType.OTHER -> Icons.Default.Science
