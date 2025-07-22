@@ -29,6 +29,7 @@ fun AddIngredientsScreen(
 ) {
     val ingredients by viewModel.allIngredients.collectAsStateWithLifecycle()
     var selectedIngredients by remember { mutableStateOf(setOf<Int>()) }
+    var isSaving by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -43,13 +44,30 @@ fun AddIngredientsScreen(
                     if (selectedIngredients.isNotEmpty()) {
                         IconButton(
                             onClick = {
-                                // TODO: Add selected ingredients to project
-                                // This will be implemented when we add the ProjectIngredient logic
+                                isSaving = true
+                                // Save selected ingredients to project
+                                viewModel.addIngredientsToProject(
+                                    projectId = projectId,
+                                    ingredientIds = selectedIngredients,
+                                    defaultQuantity = 1.0, // Default to 1 unit - user can edit later
+                                    defaultUnit = "lbs" // Default unit - user can edit later
+                                )
+                                
+                                // Navigate back after a short delay to show completion
+                                isSaving = false
                                 onIngredientsAdded()
                                 onNavigateBack()
-                            }
+                            },
+                            enabled = !isSaving
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = "Add Selected")
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Default.Check, contentDescription = "Add Selected")
+                            }
                         }
                     }
                 }
@@ -71,12 +89,26 @@ fun AddIngredientsScreen(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
-                    Text(
-                        text = "${selectedIngredients.size} ingredient(s) selected",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${selectedIngredients.size} ingredient(s) selected",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        
+                        if (!isSaving) {
+                            AssistChip(
+                                onClick = { selectedIngredients = emptySet() },
+                                label = { Text("Clear") }
+                            )
+                        }
+                    }
                 }
             }
             
@@ -132,11 +164,14 @@ fun AddIngredientsScreen(
                                     IngredientSelectionCard(
                                         ingredient = ingredient,
                                         isSelected = selectedIngredients.contains(ingredient.id),
+                                        enabled = !isSaving,
                                         onSelectionChanged = { isSelected ->
-                                            selectedIngredients = if (isSelected) {
-                                                selectedIngredients + ingredient.id
-                                            } else {
-                                                selectedIngredients - ingredient.id
+                                            if (!isSaving) {
+                                                selectedIngredients = if (isSelected) {
+                                                    selectedIngredients + ingredient.id
+                                                } else {
+                                                    selectedIngredients - ingredient.id
+                                                }
                                             }
                                         }
                                     )
@@ -154,6 +189,7 @@ fun AddIngredientsScreen(
 private fun IngredientSelectionCard(
     ingredient: Ingredient,
     isSelected: Boolean,
+    enabled: Boolean = true,
     onSelectionChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -162,6 +198,7 @@ private fun IngredientSelectionCard(
             .fillMaxWidth()
             .selectable(
                 selected = isSelected,
+                enabled = enabled,
                 onClick = { onSelectionChanged(!isSelected) }
             ),
         colors = CardDefaults.cardColors(
@@ -223,10 +260,21 @@ private fun IngredientSelectionCard(
                         )
                     }
                 }
+                
+                // Show current stock if available
+                if (ingredient.currentStock > 0) {
+                    Text(
+                        text = "In stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
             
             Checkbox(
                 checked = isSelected,
+                enabled = enabled,
                 onCheckedChange = onSelectionChanged
             )
         }
