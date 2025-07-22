@@ -46,16 +46,16 @@ fun CalculatorsScreen(
             type = "srm"
         ),
         CalculatorItem(
+            name = "Water Calculator",
+            description = "Mash & sparge water",
+            icon = Icons.Default.Water,
+            type = "water"
+        ),
+        CalculatorItem(
             name = "Priming Sugar",
             description = "Calculate carbonation",
             icon = Icons.Default.BubbleChart,
             type = "priming"
-        ),
-        CalculatorItem(
-            name = "Hydrometer Correction",
-            description = "Temperature correction",
-            icon = Icons.Default.Thermostat,
-            type = "hydrometer"
         ),
         CalculatorItem(
             name = "Brix to SG",
