@@ -176,9 +176,13 @@ class CreateProjectViewModel @Inject constructor(
         return when (ingredientType) {
             IngredientType.GRAIN -> "lbs"
             IngredientType.HOP -> "oz"
-            IngredientType.FRUIT, IngredientType.ADJUNCT -> "lbs"
-            IngredientType.YEAST -> "packet"
+            IngredientType.FRUIT -> "lbs"
+            IngredientType.ADJUNCT -> "lbs"
             IngredientType.SPICE -> "tsp"
+            IngredientType.YEAST_NUTRIENT -> "tsp"
+            IngredientType.ACID -> "tsp"
+            IngredientType.WATER_TREATMENT -> "tsp"
+            IngredientType.CLARIFIER -> "tsp"
             IngredientType.OTHER -> "oz"
         }
     }
@@ -189,8 +193,11 @@ class CreateProjectViewModel @Inject constructor(
             IngredientType.HOP -> "60 min"
             IngredientType.FRUIT -> "Secondary"
             IngredientType.ADJUNCT -> "Boil"
-            IngredientType.YEAST -> "Primary"
             IngredientType.SPICE -> "Boil"
+            IngredientType.YEAST_NUTRIENT -> "Primary"
+            IngredientType.ACID -> "Pre-fermentation"
+            IngredientType.WATER_TREATMENT -> "Mash"
+            IngredientType.CLARIFIER -> "Secondary"
             IngredientType.OTHER -> "As needed"
         }
     }
