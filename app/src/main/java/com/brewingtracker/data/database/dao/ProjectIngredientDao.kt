@@ -33,8 +33,28 @@ interface ProjectIngredientDao {
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId")
     suspend fun deleteAllProjectIngredients(projectId: String)
 
+    // NEW: Alias method for repository compatibility - ADDED
+    @Query("DELETE FROM project_ingredients WHERE projectId = :projectId")
+    suspend fun removeAllIngredientsFromProject(projectId: String)
+
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId AND ingredientId = :ingredientId")
     suspend fun removeIngredientFromProject(projectId: String, ingredientId: Int)
+
+    // NEW: Update individual ingredient details - ADDED  
+    @Query("""
+        UPDATE project_ingredients 
+        SET quantity = :quantity, 
+            unit = :unit, 
+            additionTime = :additionTime 
+        WHERE projectId = :projectId AND ingredientId = :ingredientId
+    """)
+    suspend fun updateProjectIngredientDetails(
+        projectId: String,
+        ingredientId: Int,
+        quantity: Double,
+        unit: String,
+        additionTime: String? = null
+    )
 }
 
 // Data class for joined query results - must include ALL columns from pi.* selection
