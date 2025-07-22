@@ -33,9 +33,9 @@ fun ProjectDetailScreen(
     onAddIngredientsClick: () -> Unit = {},
     viewModel: ProjectViewModel = hiltViewModel()
 ) {
-    // Fixed: Remove parameters from collectAsStateWithLifecycle()
-    val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle()
-    val projectIngredients by viewModel.getProjectIngredientsWithDetails(projectId).collectAsStateWithLifecycle()
+    // Fixed: Added initialValue parameters to collectAsStateWithLifecycle()
+    val project by viewModel.getProjectById(projectId).collectAsStateWithLifecycle(initialValue = null)
+    val projectIngredients by viewModel.getProjectIngredientsWithDetails(projectId).collectAsStateWithLifecycle(initialValue = emptyList())
     val scrollState = rememberScrollState()
 
     Column(
@@ -552,7 +552,7 @@ private fun PhaseProgressCard(
             // Progress indicator
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = (currentIndex + 1).toFloat() / phases.size,
+                progress = { (currentIndex + 1).toFloat() / phases.size },
                 modifier = Modifier.fillMaxWidth()
             )
 
