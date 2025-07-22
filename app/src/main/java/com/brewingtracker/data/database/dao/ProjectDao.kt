@@ -32,6 +32,10 @@ interface ProjectDao {
     @Delete
     suspend fun deleteProject(project: Project)
 
+    // NEW: Delete project by ID - ADDED
+    @Query("DELETE FROM projects WHERE id = :projectId")
+    suspend fun deleteProject(projectId: String)
+
     @Query("UPDATE projects SET currentPhase = :phase, updatedAt = :timestamp WHERE id = :projectId")
     suspend fun updateProjectPhase(projectId: String, phase: ProjectPhase, timestamp: Long = System.currentTimeMillis())
 
