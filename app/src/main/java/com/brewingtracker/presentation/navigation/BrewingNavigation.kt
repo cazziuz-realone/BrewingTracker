@@ -139,6 +139,9 @@ fun BrewingNavigation(
                 "brix" -> BrixConverterScreen(
                     onBackClick = { navController.popBackStack() }
                 )
+                "water" -> WaterCalculatorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
                 else -> {
                     // Fallback to calculators list
                     CalculatorsScreen(
