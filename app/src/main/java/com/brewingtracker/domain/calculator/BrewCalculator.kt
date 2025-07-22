@@ -149,12 +149,7 @@ data class NutrientResult(
     val totalYAN: Double
 )
 
-enum class SugarType(val factor: Double, val displayName: String) {
-    CORN_SUGAR(4.0, "Corn Sugar (Dextrose)"),
-    TABLE_SUGAR(3.7, "Table Sugar (Sucrose)"),
-    DME(4.6, "Dry Malt Extract"),
-    HONEY(3.5, "Honey")
-}
+// REMOVED: Duplicate SugarType enum - using the one from SugarType.kt file
 
 enum class MeadType(val yanRequirement: Double, val displayName: String) {
     TRADITIONAL(50.0, "Traditional Mead"),
