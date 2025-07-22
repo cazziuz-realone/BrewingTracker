@@ -64,7 +64,7 @@ class BrewingRepository @Inject constructor(
         projectDao.updateProjectFavorite(projectId, isFavorite)
 
     // ==========================================
-    // PROJECT INGREDIENT OPERATIONS - KEEP FOR FUTURE USE
+    // PROJECT INGREDIENT OPERATIONS - ENHANCED
     // ==========================================
     
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredient>> = 
@@ -81,6 +81,33 @@ class BrewingRepository @Inject constructor(
     
     suspend fun updateProjectIngredient(projectIngredient: ProjectIngredient) = 
         projectIngredientDao.updateProjectIngredient(projectIngredient)
+
+    /**
+     * Remove all ingredients from a project - NEW METHOD
+     * Used when deleting a project to maintain data integrity
+     */
+    suspend fun removeAllIngredientsFromProject(projectId: String) = 
+        projectIngredientDao.removeAllIngredientsFromProject(projectId)
+
+    /**
+     * Update project ingredient with individual parameters - NEW METHOD
+     * Convenient method for updating ingredient details without creating ProjectIngredient object
+     */
+    suspend fun updateProjectIngredient(
+        projectId: String,
+        ingredientId: Int,
+        quantity: Double,
+        unit: String,
+        additionTime: String? = null
+    ) {
+        projectIngredientDao.updateProjectIngredientDetails(
+            projectId = projectId,
+            ingredientId = ingredientId,
+            quantity = quantity,
+            unit = unit,
+            additionTime = additionTime
+        )
+    }
 
     // ==========================================
     // ADDITIONAL METHODS FOR ADVANCED FILTERING (Optional)
