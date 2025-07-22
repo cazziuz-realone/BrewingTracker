@@ -33,7 +33,7 @@ fun BrewingTrackerApp() {
                         label = { 
                             Text(
                                 text = item.label,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp, // Reduced from 11.sp for better mobile fit
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             ) 
