@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
         Yeast::class,
         ProjectIngredient::class
     ],
-    version = 5,  // Incremented to 5 for complete ingredient database expansion
+    version = 6,  // Incremented to 6 for major mead-focused ingredient expansion
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -86,7 +86,7 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
     val ingredientDao = database.ingredientDao()
     val yeastDao = database.yeastDao()
     
-    // COMPREHENSIVE INGREDIENT DATABASE - 100+ Ingredients
+    // COMPREHENSIVE INGREDIENT DATABASE - 200+ Mead-Focused Ingredients
     val sampleIngredients = listOf(
         // BASE MALTS
         Ingredient(
@@ -592,14 +592,14 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             unit = "pack"
         ),
 
-        // SPECIALTY YEASTS
+        // SPECIALTY YEASTS - KVEIK (ORIGINAL + NEW)
         Ingredient(
             id = 125,
             name = "Omega Voss Kveik",
             type = IngredientType.YEAST_NUTRIENT,
             category = "Kveik",
-            beverageTypes = "beer",
-            description = "Fast fermenting, citrus character. Temp: 68-98°F!",
+            beverageTypes = "beer,mead",
+            description = "Fast fermenting, citrus character. Temp: 68-98°F! Great for mead",
             currentStock = 0.0,
             unit = "pack"
         ),
@@ -676,7 +676,193 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             unit = "oz"
         ),
 
-        // HONEY VARIETIES - PREMIUM MEAD SELECTION
+        // ===== MAJOR MEAD-FOCUSED EXPANSION STARTS HERE =====
+
+        // ADDITIONAL KVEIK STRAINS - PERFECT FOR MEAD
+        Ingredient(
+            id = 133,
+            name = "Omega Hornindal Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Tropical fruit esters, works fantastic in fruit meads. Temp: 70-95°F",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 134,
+            name = "Omega Hothead Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Clean fermentation, extreme temperature tolerance. Temp: 68-98°F",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 135,
+            name = "Omega Lutra Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Pseudolager strain, clean at high temps. Perfect for session meads",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 136,
+            name = "Imperial Kveiking",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Citrus and tropical fruit character. Fast mead fermentation",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 137,
+            name = "Lallemand Voss Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Alternative Voss source. Orange citrus esters, mead-friendly",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 138,
+            name = "Bootleg Biology Oslo Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Clean, neutral fermentation. Excellent base for spiced meads",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 139,
+            name = "Imperial Ragnar Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Orange citrus character. Complements honey beautifully",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 140,
+            name = "Omega Ebbegarden Kveik",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Kveik",
+            beverageTypes = "beer,mead",
+            description = "Dried fruit and spice notes. Perfect for traditional meads",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+
+        // ADDITIONAL WINE YEASTS - EXCELLENT FOR MEAD
+        Ingredient(
+            id = 141,
+            name = "Lallemand ICV-D254",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Enhances color extraction, perfect for dark fruit meads. 16% ABV",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 142,
+            name = "Red Star Montrachet",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Classic all-purpose wine yeast. Clean fermentation, 13% ABV",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 143,
+            name = "Lallemand K1-V1116",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Reliable, high alcohol tolerance (18%). Cold fermenter, crisp meads",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 144,
+            name = "Red Star Pasteur Red",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "For red wines and dark fruit meads. Rich, full-bodied character",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 145,
+            name = "Lallemand QA23",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "White wine specialist, preserves delicate honey flavors",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 146,
+            name = "Lallemand RC212",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Burgundy strain for complex fruit meads. Elegant character",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 147,
+            name = "Red Star Pasteur Champagne",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "High alcohol, clean fermentation. Traditional mead favorite",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 148,
+            name = "Lallemand ICV-GRE",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Enhances tropical fruit character. Great for exotic fruit meads",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 149,
+            name = "White Labs WLP715 Champagne",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "High alcohol (15%), clean profile. Sparkling mead specialist",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+        Ingredient(
+            id = 150,
+            name = "Lallemand Rhône 2323",
+            type = IngredientType.YEAST_NUTRIENT,
+            category = "Wine",
+            beverageTypes = "wine,mead",
+            description = "Spicy, complex character perfect for metheglin",
+            currentStock = 0.0,
+            unit = "pack"
+        ),
+
+        // HONEY VARIETIES - PREMIUM MEAD SELECTION (EXPANDED)
         Ingredient(
             id = 200,
             name = "Wildflower Honey",
@@ -838,7 +1024,129 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             unit = "lb"
         ),
 
-        // FRUITS - MELOMEL FOCUSED
+        // NUTS & SEEDS - NEW CATEGORY FOR MEAD MAKING
+        Ingredient(
+            id = 600,
+            name = "Raw Almonds",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Classic metheglin addition, subtle sweetness and nuttiness",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 601,
+            name = "English Walnuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Rich, earthy flavor perfect for fall and winter meads",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 602,
+            name = "Hazelnuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Buttery character, pairs excellently with chocolate flavors",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 603,
+            name = "Pecans",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Southern comfort in mead form. Rich, buttery sweetness",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 604,
+            name = "Pistachios",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Unique nutty-sweet profile with subtle green flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 605,
+            name = "Pine Nuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Delicate, resinous notes. Expensive but unique character",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 606,
+            name = "Macadamia Nuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Rich, tropical character with buttery smoothness",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 607,
+            name = "Brazil Nuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Intense, earthy flavor. High in selenium",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 608,
+            name = "Chestnuts",
+            type = IngredientType.ADJUNCT,
+            category = "Nuts",
+            beverageTypes = "mead,wine",
+            description = "Sweet, starchy addition perfect for winter holiday meads",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 609,
+            name = "Pumpkin Seeds",
+            type = IngredientType.ADJUNCT,
+            category = "Seeds",
+            beverageTypes = "mead,beer",
+            description = "Earthy, autumn character. Great for seasonal meads",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 610,
+            name = "Sunflower Seeds",
+            type = IngredientType.ADJUNCT,
+            category = "Seeds",
+            beverageTypes = "mead,beer",
+            description = "Mild nutty flavor with earthy undertones",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 611,
+            name = "Sesame Seeds",
+            type = IngredientType.ADJUNCT,
+            category = "Seeds",
+            beverageTypes = "mead",
+            description = "Toasted for depth, adds Middle Eastern character",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+
+        // WILD & EXOTIC BERRIES
         Ingredient(
             id = 250,
             name = "Elderberries",
@@ -959,8 +1267,140 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             currentStock = 0.0,
             unit = "lb"
         ),
+        
+        // ADDITIONAL WILD BERRIES
+        Ingredient(
+            id = 262,
+            name = "Huckleberries",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Intense, wild flavor similar to blueberries but more complex",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 263,
+            name = "Gooseberries",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Tart, wine-like character. European traditional mead fruit",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 264,
+            name = "Chokeberries (Aronia)",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Extremely high antioxidants, astringent, complex flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 265,
+            name = "Sea Buckthorn",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Vitamin C powerhouse, tangy orange berries. Nordic superfruit",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 266,
+            name = "Lingonberries",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Scandinavian superfruit, tart and bright. Traditional Nordic mead",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 267,
+            name = "Cloudberries",
+            type = IngredientType.FRUIT,
+            category = "Wild Berry",
+            beverageTypes = "mead,wine",
+            description = "Rare Nordic delicacy. Golden berries with complex flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 268,
+            name = "Boysenberries",
+            type = IngredientType.FRUIT,
+            category = "Hybrid Berry",
+            beverageTypes = "mead,wine,beer",
+            description = "Blackberry-raspberry hybrid with complex sweet-tart flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 269,
+            name = "Marionberries",
+            type = IngredientType.FRUIT,
+            category = "Specialty Berry",
+            beverageTypes = "mead,wine,beer",
+            description = "Pacific Northwest specialty. Complex blackberry character",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 270,
+            name = "Acai Berries",
+            type = IngredientType.FRUIT,
+            category = "Superfruit",
+            beverageTypes = "mead,wine",
+            description = "Brazilian superfruit with earthy, wine-like flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 271,
+            name = "Goji Berries",
+            type = IngredientType.FRUIT,
+            category = "Superfruit",
+            beverageTypes = "mead,wine",
+            description = "Chinese superfruit, sweet-tart with herbal undertones",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 272,
+            name = "Rambutan",
+            type = IngredientType.FRUIT,
+            category = "Tropical",
+            beverageTypes = "mead,wine",
+            description = "Lychee-like tropical fruit, floral and sweet",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 273,
+            name = "Mangosteen",
+            type = IngredientType.FRUIT,
+            category = "Tropical",
+            beverageTypes = "mead,wine",
+            description = "Queen of fruits, complex sweet-tart tropical flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 274,
+            name = "Feijoa",
+            type = IngredientType.FRUIT,
+            category = "Tropical",
+            beverageTypes = "mead,wine",
+            description = "Pineapple-guava hybrid with aromatic, tropical character",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
 
-        // SPICES & BOTANICALS - METHEGLIN FOCUSED
+        // SPICES & BOTANICALS - METHEGLIN FOCUSED (EXPANDED)
         Ingredient(
             id = 300,
             name = "Ceylon Cinnamon",
@@ -1082,6 +1522,304 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             unit = "oz"
         ),
 
+        // EXOTIC SPICES - NEW ADDITIONS
+        Ingredient(
+            id = 312,
+            name = "Grains of Paradise",
+            type = IngredientType.SPICE,
+            category = "Exotic",
+            beverageTypes = "mead,beer",
+            description = "African pepper with complex heat and floral notes",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 313,
+            name = "Long Pepper",
+            type = IngredientType.SPICE,
+            category = "Exotic",
+            beverageTypes = "mead,wine",
+            description = "Ancient spice, different from black pepper. Sweet then hot",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 314,
+            name = "Pink Peppercorns",
+            type = IngredientType.SPICE,
+            category = "Exotic",
+            beverageTypes = "mead,wine",
+            description = "Fruity, mild heat with sweet undertones",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 315,
+            name = "Szechuan Peppercorns",
+            type = IngredientType.SPICE,
+            category = "Exotic",
+            beverageTypes = "mead",
+            description = "Numbing, citrusy sensation. Unique mouthfeel",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 316,
+            name = "Sumac",
+            type = IngredientType.SPICE,
+            category = "Exotic",
+            beverageTypes = "mead,wine",
+            description = "Tart, lemony Middle Eastern spice. Natural acidity",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 317,
+            name = "Juniper Berries",
+            type = IngredientType.SPICE,
+            category = "Botanical",
+            beverageTypes = "mead,beer",
+            description = "Gin-like, piney flavor. Traditional European botanical",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 318,
+            name = "Angelica Root",
+            type = IngredientType.SPICE,
+            category = "Botanical",
+            beverageTypes = "mead,wine",
+            description = "Traditional European herb, gin botanical. Earthy, herbal",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 319,
+            name = "Orris Root",
+            type = IngredientType.SPICE,
+            category = "Botanical",
+            beverageTypes = "mead,wine",
+            description = "Violet-scented, fixative properties. Floral complexity",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 320,
+            name = "Gentian Root",
+            type = IngredientType.SPICE,
+            category = "Botanical",
+            beverageTypes = "mead,wine",
+            description = "Bitter, complex medicinal herb. Adds depth and complexity",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 321,
+            name = "Elderflowers",
+            type = IngredientType.SPICE,
+            category = "Floral",
+            beverageTypes = "mead,wine",
+            description = "Classic European addition. Delicate, muscat-like flavor",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 322,
+            name = "Jasmine Flowers",
+            type = IngredientType.SPICE,
+            category = "Floral",
+            beverageTypes = "mead,wine",
+            description = "Intensely floral, perfumed. Use very sparingly",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 323,
+            name = "Lemon Verbena",
+            type = IngredientType.SPICE,
+            category = "Herbal",
+            beverageTypes = "mead",
+            description = "Intense lemon flavor without acidity. Aromatic herb",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 324,
+            name = "Bee Balm",
+            type = IngredientType.SPICE,
+            category = "Herbal",
+            beverageTypes = "mead",
+            description = "Minty, citrusy wild herb. Traditional Native American botanical",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 325,
+            name = "Meadowsweet",
+            type = IngredientType.SPICE,
+            category = "Herbal",
+            beverageTypes = "mead",
+            description = "Honey-almond flavor, natural aspirin. Traditional mead herb",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+
+        // ADAPTOGENS & FUNCTIONAL MUSHROOMS
+        Ingredient(
+            id = 326,
+            name = "Reishi Mushroom",
+            type = IngredientType.OTHER,
+            category = "Adaptogen",
+            beverageTypes = "mead",
+            description = "Earthy, medicinal properties. Immune support and stress relief",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 327,
+            name = "Chaga Mushroom",
+            type = IngredientType.OTHER,
+            category = "Adaptogen",
+            beverageTypes = "mead",
+            description = "Birch-like flavor, antioxidant rich. Natural energy support",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 328,
+            name = "Ashwagandha",
+            type = IngredientType.OTHER,
+            category = "Adaptogen",
+            beverageTypes = "mead",
+            description = "Adaptogenic herb for stress reduction and vitality",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 329,
+            name = "Rhodiola Root",
+            type = IngredientType.OTHER,
+            category = "Adaptogen",
+            beverageTypes = "mead",
+            description = "Stress-reducing botanical with earthy, rose-like notes",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+
+        // SPECIALTY SUGARS & SWEETENERS
+        Ingredient(
+            id = 330,
+            name = "Coconut Sugar",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,wine",
+            description = "Tropical, caramel notes with lower glycemic index",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 331,
+            name = "Date Sugar",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,wine",
+            description = "Concentrated date sweetness with complex fruit notes",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 332,
+            name = "Maple Sugar",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,beer",
+            description = "Concentrated maple flavor, traditional North American sweetener",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 333,
+            name = "Jaggery",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,wine",
+            description = "Indian palm sugar with complex, molasses-like flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 334,
+            name = "Muscovado Sugar",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,wine",
+            description = "Unrefined cane sugar with rich molasses character",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 335,
+            name = "Black Strap Molasses",
+            type = IngredientType.ADJUNCT,
+            category = "Specialty Sugar",
+            beverageTypes = "mead,beer",
+            description = "Intense, mineral-rich sweetener with robust flavor",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+
+        // TEA & COFFEE ADDITIONS
+        Ingredient(
+            id = 336,
+            name = "Earl Grey Tea",
+            type = IngredientType.OTHER,
+            category = "Tea",
+            beverageTypes = "mead",
+            description = "Bergamot-scented black tea for aromatic complexity",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 337,
+            name = "Oolong Tea",
+            type = IngredientType.OTHER,
+            category = "Tea",
+            beverageTypes = "mead,wine",
+            description = "Complex, partially fermented tea with fruit and floral notes",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 338,
+            name = "White Tea",
+            type = IngredientType.OTHER,
+            category = "Tea",
+            beverageTypes = "mead",
+            description = "Delicate, subtle flavor with light sweetness",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 339,
+            name = "Rooibos Tea",
+            type = IngredientType.OTHER,
+            category = "Tea",
+            beverageTypes = "mead",
+            description = "Caffeine-free red bush tea with natural vanilla notes",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 340,
+            name = "Cold Brew Coffee",
+            type = IngredientType.OTHER,
+            category = "Coffee",
+            beverageTypes = "mead,beer",
+            description = "Smooth, less acidic coffee character perfect for coffee meads",
+            currentStock = 0.0,
+            unit = "fl oz"
+        ),
+
         // ADDITIONAL HOPS
         Ingredient(
             id = 401,
@@ -1166,7 +1904,69 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
             unit = "lb"
         ),
 
-        // ADJUNCTS & SUGARS
+        // WINE-SPECIFIC INGREDIENTS
+        Ingredient(
+            id = 700,
+            name = "Pinot Noir Grapes",
+            type = IngredientType.FRUIT,
+            category = "Wine Grape",
+            beverageTypes = "wine,mead",
+            description = "Elegant red wine grape variety. Light to medium body",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 701,
+            name = "Chardonnay Grapes",
+            type = IngredientType.FRUIT,
+            category = "Wine Grape",
+            beverageTypes = "wine,mead",
+            description = "Classic white wine grape. Full-bodied, versatile",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 702,
+            name = "Riesling Grapes",
+            type = IngredientType.FRUIT,
+            category = "Wine Grape",
+            beverageTypes = "wine,mead",
+            description = "Aromatic white grape with floral character",
+            currentStock = 0.0,
+            unit = "lb"
+        ),
+        Ingredient(
+            id = 703,
+            name = "Grape Tannin Powder",
+            type = IngredientType.ADJUNCT,
+            category = "Wine Additive",
+            beverageTypes = "wine,mead",
+            description = "Adds structure and mouthfeel to wines and meads",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 704,
+            name = "Pectic Enzyme",
+            type = IngredientType.OTHER,
+            category = "Processing Aid",
+            beverageTypes = "wine,mead",
+            description = "Breaks down fruit pectin for clearer wines and meads",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+        Ingredient(
+            id = 705,
+            name = "Acid Blend",
+            type = IngredientType.ACID,
+            category = "Wine Additive",
+            beverageTypes = "wine,mead",
+            description = "Tartaric, malic, citric acid blend for pH adjustment",
+            currentStock = 0.0,
+            unit = "oz"
+        ),
+
+        // FINAL ADJUNCTS & SUGARS
         Ingredient(
             id = 500,
             name = "Corn Sugar (Dextrose)",
