@@ -20,4 +20,14 @@ sealed class Screen(val route: String) {
     }
     object Reminders : Screen("reminders")
     object Settings : Screen("settings")
+    
+    // NEW: Recipe Builder Navigation
+    object RecipeBuilder : Screen("recipe_builder")
+    object RecipeBuilderEdit : Screen("recipe_builder/{recipeId}") {
+        fun createRoute(recipeId: String) = "recipe_builder/$recipeId"
+    }
+    object RecipeLibrary : Screen("recipe_library")
+    object RecipeDetail : Screen("recipe_detail/{recipeId}") {
+        fun createRoute(recipeId: String) = "recipe_detail/$recipeId"
+    }
 }
