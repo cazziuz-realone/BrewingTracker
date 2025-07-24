@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.brewingtracker.presentation.screens.*
 import com.brewingtracker.presentation.screens.recipe.RecipeBuilderScreen
+import com.brewingtracker.presentation.screens.recipe.RecipeLibraryScreen
 
 @Composable
 fun BrewingNavigation(
@@ -174,7 +175,14 @@ fun BrewingNavigation(
             }
         }
 
-        // NEW: Recipe Builder Screens
+        // RECIPE SCREENS - FULLY IMPLEMENTED
+        
+        // Recipe Library Screen - FIXED: Now properly implemented
+        composable(Screen.RecipeLibrary.route) {
+            RecipeLibraryScreen(navController = navController)
+        }
+
+        // Recipe Builder Screen - New recipe
         composable(Screen.RecipeBuilder.route) {
             RecipeBuilderScreen(
                 recipeId = null, // New recipe
@@ -182,6 +190,7 @@ fun BrewingNavigation(
             )
         }
 
+        // Recipe Builder Screen - Edit existing recipe
         composable(
             route = Screen.RecipeBuilderEdit.route,
             arguments = listOf(
@@ -197,19 +206,7 @@ fun BrewingNavigation(
             )
         }
 
-        composable(Screen.RecipeLibrary.route) {
-            // Placeholder for Recipe Library - can be implemented later
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Recipe Library\n(Coming Soon)",
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
+        // Recipe Detail Screen - PLACEHOLDER (can be implemented later)
         composable(
             route = Screen.RecipeDetail.route,
             arguments = listOf(
