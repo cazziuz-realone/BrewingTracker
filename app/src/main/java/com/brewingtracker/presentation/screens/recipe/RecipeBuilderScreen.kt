@@ -97,13 +97,13 @@ fun RecipeBuilderScreen(
                 )
             }
             
-            // Selected Ingredients Card
+            // Selected Ingredients Card - FIXED: Now properly handles ingredient editing
             item {
                 SelectedIngredientsCard(
                     ingredients = uiState.recipeIngredients,
                     inventoryStatus = uiState.inventoryStatus,
                     batchSize = uiState.selectedBatchSize,
-                    onIngredientEdit = { /* TODO: Show edit dialog */ },
+                    onIngredientEdit = viewModel::updateIngredient, // FIXED: Properly connected
                     onIngredientRemove = viewModel::removeIngredient
                 )
             }
