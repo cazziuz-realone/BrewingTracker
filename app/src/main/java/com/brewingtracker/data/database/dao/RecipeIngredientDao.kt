@@ -3,6 +3,8 @@ package com.brewingtracker.data.database.dao
 import androidx.room.*
 import com.brewingtracker.data.database.entities.RecipeIngredient
 import com.brewingtracker.data.database.entities.RecipeIngredientWithDetails
+import com.brewingtracker.data.database.entities.Ingredient
+import com.brewingtracker.data.database.entities.IngredientType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -11,21 +13,13 @@ interface RecipeIngredientDao {
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     suspend fun getRecipeIngredients(recipeId: String): List<RecipeIngredient>
     
-    @Query("""
-        SELECT ri.*, i.* FROM recipe_ingredients ri
-        INNER JOIN ingredients i ON ri.ingredientId = i.id
-        WHERE ri.recipeId = :recipeId
-        ORDER BY ri.additionTiming, ri.createdAt
-    """)
-    fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>>
+    @Transaction
+    @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
+    fun getRecipeIngredientsWithDetails(recipeId: String): Flow<Map<RecipeIngredient, Ingredient>>
     
-    @Query("""
-        SELECT ri.*, i.* FROM recipe_ingredients ri
-        INNER JOIN ingredients i ON ri.ingredientId = i.id
-        WHERE ri.recipeId = :recipeId AND ri.additionTiming = :timing
-        ORDER BY ri.createdAt
-    """)
-    fun getRecipeIngredientsByTiming(recipeId: String, timing: String): Flow<List<RecipeIngredientWithDetails>>
+    @Transaction
+    @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId AND additionTiming = :timing ORDER BY createdAt")
+    fun getRecipeIngredientsByTiming(recipeId: String, timing: String): Flow<Map<RecipeIngredient, Ingredient>>
     
     @Query("SELECT * FROM recipe_ingredients WHERE id = :ingredientId")
     suspend fun getRecipeIngredientById(ingredientId: Int): RecipeIngredient?
@@ -68,14 +62,41 @@ interface RecipeIngredientDao {
     """)
     suspend fun getInventoryCheckData(recipeId: String): List<InventoryCheckResult>
     
-    // Copy ingredients from one recipe to another (for duplication)
+    // Duplicate recipe ingredients for recipe copying
+    @Insert
+    suspend fun duplicateRecipeIngredients(
+        sourceRecipeId: String, 
+        newRecipeId: String,
+        ingredients: List<RecipeIngredient>
+    ) {
+        val sourceIngredients = getRecipeIngredients(sourceRecipeId)
+        val newIngredients = sourceIngredients.map { ingredient ->
+            ingredient.copy(
+                id = 0, // Auto-generate new ID
+                recipeId = newRecipeId,
+                createdAt = System.currentTimeMillis()
+            )
+        }
+        insertRecipeIngredients(newIngredients)
+    }
+    
+    // Search ingredients by type and name for the recipe builder
     @Query("""
-        INSERT INTO recipe_ingredients (recipeId, ingredientId, baseQuantity, baseUnit, additionTiming, additionDay, notes, isOptional, substitutable)
-        SELECT :newRecipeId, ingredientId, baseQuantity, baseUnit, additionTiming, additionDay, notes, isOptional, substitutable
-        FROM recipe_ingredients 
-        WHERE recipeId = :sourceRecipeId
+        SELECT * FROM ingredients 
+        WHERE type = :type 
+        AND (name LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%')
+        ORDER BY name ASC
+        LIMIT 50
     """)
-    suspend fun copyIngredientsToNewRecipe(sourceRecipeId: String, newRecipeId: String)
+    suspend fun searchIngredientsByTypeAndName(type: IngredientType, query: String): List<Ingredient>
+    
+    @Query("""
+        SELECT * FROM ingredients 
+        WHERE type = :type 
+        ORDER BY name ASC
+        LIMIT 100
+    """)
+    suspend fun getIngredientsByType(type: IngredientType): List<Ingredient>
 }
 
 // Data class for inventory checking
