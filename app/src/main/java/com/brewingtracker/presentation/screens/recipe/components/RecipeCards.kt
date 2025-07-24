@@ -108,7 +108,7 @@ fun BatchSizeCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            Icons.Default.ScaleIcon,
+                            Icons.Default.SwapHoriz, // FIXED: Use existing icon instead of ScaleIcon
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary
