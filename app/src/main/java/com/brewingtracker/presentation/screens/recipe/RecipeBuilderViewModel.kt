@@ -8,20 +8,16 @@ import kotlinx.coroutines.launch
 import com.brewingtracker.data.database.entities.*
 import com.brewingtracker.data.database.dao.RecipeDao
 import com.brewingtracker.data.database.dao.RecipeIngredientDao
-import com.brewingtracker.data.database.dao.IngredientDao
 import javax.inject.Inject
 
 @HiltViewModel
 class RecipeBuilderViewModel @Inject constructor(
     private val recipeDao: RecipeDao,
-    private val recipeIngredientDao: RecipeIngredientDao,
-    private val ingredientDao: IngredientDao
+    private val recipeIngredientDao: RecipeIngredientDao
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RecipeBuilderUiState())
     val uiState: StateFlow<RecipeBuilderUiState> = _uiState.asStateFlow()
-    
-    private val _searchResults = MutableStateFlow<List<Ingredient>>(emptyList())
     
     init {
         // Set up search flow
@@ -31,16 +27,12 @@ class RecipeBuilderViewModel @Inject constructor(
             .onEach { (category, query) ->
                 if (category != null && query.isNotEmpty()) {
                     searchIngredients(category, query)
+                } else if (category != null && query.isEmpty()) {
+                    // Show all ingredients for selected category
+                    loadIngredientsByCategory(category)
                 } else {
-                    _searchResults.value = emptyList()
+                    _uiState.value = _uiState.value.copy(searchResults = emptyList())
                 }
-            }
-            .launchIn(viewModelScope)
-        
-        // Update search results in UI state
-        _searchResults
-            .onEach { results ->
-                _uiState.value = _uiState.value.copy(searchResults = results)
             }
             .launchIn(viewModelScope)
     }
@@ -59,7 +51,6 @@ class RecipeBuilderViewModel @Inject constructor(
                     loadRecipeIngredients(recipeId)
                 }
             } catch (e: Exception) {
-                // Handle error
                 _uiState.value = _uiState.value.copy(
                     validation = listOf("Error loading recipe: ${e.message}")
                 )
@@ -68,19 +59,25 @@ class RecipeBuilderViewModel @Inject constructor(
     }
     
     private suspend fun loadRecipeIngredients(recipeId: String) {
-        recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
-            .catch { e ->
-                _uiState.value = _uiState.value.copy(
-                    validation = _uiState.value.validation + "Error loading ingredients: ${e.message}"
-                )
-            }
-            .collect { ingredients ->
-                _uiState.value = _uiState.value.copy(
-                    recipeIngredients = ingredients
-                )
-                calculateRecipe()
-                checkInventoryStatus()
-            }
+        try {
+            // Note: This will need to be adapted based on your actual Room relationship setup
+            // For now, we'll use a simpler approach
+            val recipeIngredients = recipeIngredientDao.getRecipeIngredients(recipeId)
+            
+            // Convert to RecipeIngredientWithDetails - you'll need to implement this join
+            // This is a placeholder - implement proper join query in your DAO
+            val ingredientsWithDetails = emptyList<RecipeIngredientWithDetails>()
+            
+            _uiState.value = _uiState.value.copy(
+                recipeIngredients = ingredientsWithDetails
+            )
+            calculateRecipe()
+            checkInventoryStatus()
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                validation = _uiState.value.validation + "Error loading ingredients: ${e.message}"
+            )
+        }
     }
     
     fun updateRecipe(recipe: Recipe) {
@@ -110,12 +107,21 @@ class RecipeBuilderViewModel @Inject constructor(
     private fun searchIngredients(category: IngredientType, query: String) {
         viewModelScope.launch {
             try {
-                // This would use your existing ingredient search functionality
-                // For now, return empty list - you'll need to implement based on your IngredientDao
-                val results = ingredientDao.searchIngredientsByTypeAndName(category, query)
-                _searchResults.value = results
+                val results = recipeIngredientDao.searchIngredientsByTypeAndName(category, query)
+                _uiState.value = _uiState.value.copy(searchResults = results)
             } catch (e: Exception) {
-                _searchResults.value = emptyList()
+                _uiState.value = _uiState.value.copy(searchResults = emptyList())
+            }
+        }
+    }
+    
+    private fun loadIngredientsByCategory(category: IngredientType) {
+        viewModelScope.launch {
+            try {
+                val results = recipeIngredientDao.getIngredientsByType(category)
+                _uiState.value = _uiState.value.copy(searchResults = results)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(searchResults = emptyList())
             }
         }
     }
@@ -133,7 +139,8 @@ class RecipeBuilderViewModel @Inject constructor(
             
             try {
                 recipeIngredientDao.insertRecipeIngredient(recipeIngredient)
-                // The ingredients will be updated automatically through the Flow
+                // Reload recipe ingredients
+                loadRecipeIngredients(_uiState.value.recipe.id)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     validation = _uiState.value.validation + "Error adding ingredient: ${e.message}"
@@ -146,7 +153,8 @@ class RecipeBuilderViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 recipeIngredientDao.deleteRecipeIngredientById(ingredientId)
-                // The ingredients will be updated automatically through the Flow
+                // Reload recipe ingredients
+                loadRecipeIngredients(_uiState.value.recipe.id)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     validation = _uiState.value.validation + "Error removing ingredient: ${e.message}"
@@ -160,12 +168,11 @@ class RecipeBuilderViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isCalculating = true)
             
             try {
-                // Simplified calculation - you can expand this
                 val ingredients = _uiState.value.recipeIngredients
-                val batchSize = _uiState.value.selectedBatchSize
                 
                 if (ingredients.isNotEmpty()) {
                     // Basic calculation (you'll want to make this more sophisticated)
+                    // This is a placeholder - implement proper gravity/ABV calculations
                     val estimatedOG = 1.000 + (ingredients.size * 0.010) // Placeholder
                     val estimatedFG = estimatedOG - 0.020 // Placeholder
                     val estimatedABV = (estimatedOG - estimatedFG) * 131.25
@@ -277,9 +284,3 @@ data class RecipeBuilderUiState(
     val canSave: Boolean = false,
     val saveResult: Result<Unit>? = null
 )
-
-// Extension function for IngredientDao (you'll need to add this to your actual DAO)
-suspend fun IngredientDao.searchIngredientsByTypeAndName(type: IngredientType, query: String): List<Ingredient> {
-    // This is a placeholder - implement the actual search in your IngredientDao
-    return emptyList()
-}
