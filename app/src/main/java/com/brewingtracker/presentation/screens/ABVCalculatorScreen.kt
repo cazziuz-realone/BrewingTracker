@@ -25,8 +25,21 @@ fun ABVCalculatorScreen(
     onNavigateBack: () -> Unit,
     viewModel: CalculatorViewModel = hiltViewModel()
 ) {
-    val abvState by viewModel.abvState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    
+    // Local state for input fields
+    var originalGravityText by remember { mutableStateOf("") }
+    var finalGravityText by remember { mutableStateOf("") }
+    
+    // Calculate ABV when both fields are valid
+    LaunchedEffect(originalGravityText, finalGravityText) {
+        val og = originalGravityText.toDoubleOrNull()
+        val fg = finalGravityText.toDoubleOrNull()
+        if (og != null && fg != null && og > fg && og >= 1.0 && fg >= 1.0) {
+            viewModel.calculateAlcoholByVolume(og, fg)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -41,7 +54,11 @@ fun ABVCalculatorScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::resetABVCalculator) {
+                    IconButton(onClick = { 
+                        originalGravityText = ""
+                        finalGravityText = ""
+                        viewModel.clearResults()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Reset"
@@ -97,29 +114,31 @@ fun ABVCalculatorScreen(
                     )
 
                     OutlinedTextField(
-                        value = abvState.originalGravity,
-                        onValueChange = viewModel::updateOriginalGravity,
+                        value = originalGravityText,
+                        onValueChange = { originalGravityText = it },
                         label = { Text("Original Gravity (OG)") },
                         placeholder = { Text("1.050") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        supportingText = { Text("Gravity before fermentation") }
+                        supportingText = { Text("Gravity before fermentation") },
+                        isError = originalGravityText.isNotBlank() && originalGravityText.toDoubleOrNull() == null
                     )
 
                     OutlinedTextField(
-                        value = abvState.finalGravity,
-                        onValueChange = viewModel::updateFinalGravity,
+                        value = finalGravityText,
+                        onValueChange = { finalGravityText = it },
                         label = { Text("Final Gravity (FG)") },
                         placeholder = { Text("1.010") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        supportingText = { Text("Gravity after fermentation") }
+                        supportingText = { Text("Gravity after fermentation") },
+                        isError = finalGravityText.isNotBlank() && finalGravityText.toDoubleOrNull() == null
                     )
                 }
             }
 
             // Results Section
-            if (abvState.calculatedABV != null) {
+            uiState.abvResult?.let { abvResult ->
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -135,7 +154,7 @@ fun ABVCalculatorScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "${String.format("%.2f", abvState.calculatedABV)}%",
+                            text = "${String.format("%.2f", abvResult.alcoholByVolume)}%",
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -144,29 +163,27 @@ fun ABVCalculatorScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Additional calculations
-                        abvState.attenuation?.let { attenuation ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Apparent Attenuation:",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = "${String.format("%.1f", attenuation)}%",
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Apparent Attenuation:",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "${String.format("%.1f", abvResult.attenuation)}%",
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
 
                         // Strength category
                         val category = when {
-                            abvState.calculatedABV!! < 3.5 -> "Low Alcohol" to "Light and sessionable"
-                            abvState.calculatedABV!! < 5.5 -> "Standard Strength" to "Most ales and lagers"
-                            abvState.calculatedABV!! < 8.0 -> "Strong" to "IPAs, strong ales"
-                            abvState.calculatedABV!! < 12.0 -> "Very Strong" to "Barleywines, Belgian strongs"
+                            abvResult.alcoholByVolume < 3.5 -> "Low Alcohol" to "Light and sessionable"
+                            abvResult.alcoholByVolume < 5.5 -> "Standard Strength" to "Most ales and lagers"
+                            abvResult.alcoholByVolume < 8.0 -> "Strong" to "IPAs, strong ales"
+                            abvResult.alcoholByVolume < 12.0 -> "Very Strong" to "Barleywines, Belgian strongs"
                             else -> "Extreme" to "Imperial styles, spirits"
                         }
 
@@ -226,8 +243,25 @@ fun ABVCalculatorScreen(
             }
 
             // Error handling
-            if (!abvState.isValid && 
-                (abvState.originalGravity.isNotBlank() || abvState.finalGravity.isNotBlank())) {
+            uiState.error?.let { error ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = "⚠️ $error",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+            
+            // Input validation error
+            if ((originalGravityText.isNotBlank() && originalGravityText.toDoubleOrNull() == null) ||
+                (finalGravityText.isNotBlank() && finalGravityText.toDoubleOrNull() == null) ||
+                (originalGravityText.toDoubleOrNull() != null && finalGravityText.toDoubleOrNull() != null &&
+                 originalGravityText.toDouble() <= finalGravityText.toDouble())) {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
