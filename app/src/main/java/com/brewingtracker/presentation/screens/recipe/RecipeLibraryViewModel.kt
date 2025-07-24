@@ -43,6 +43,58 @@ class RecipeLibraryViewModel @Inject constructor(
         }
     }
     
+    fun searchRecipes(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        
+        viewModelScope.launch {
+            try {
+                if (query.isBlank()) {
+                    // Load all recipes if query is empty
+                    loadRecipes()
+                } else {
+                    recipeDao.searchRecipesByName(query)
+                        .collect { recipes ->
+                            _uiState.value = _uiState.value.copy(
+                                recipes = recipes,
+                                isLoading = false
+                            )
+                        }
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Error searching recipes: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun filterRecipesByType(beverageType: BeverageType?) {
+        _uiState.value = _uiState.value.copy(selectedBeverageType = beverageType)
+        
+        viewModelScope.launch {
+            try {
+                if (beverageType == null) {
+                    // Load all recipes if no filter
+                    loadRecipes()
+                } else {
+                    recipeDao.getRecipesByBeverageType(beverageType)
+                        .collect { recipes ->
+                            _uiState.value = _uiState.value.copy(
+                                recipes = recipes,
+                                isLoading = false
+                            )
+                        }
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Error filtering recipes: ${e.message}"
+                )
+            }
+        }
+    }
+    
     fun duplicateRecipe(recipeId: String) {
         viewModelScope.launch {
             try {
@@ -74,8 +126,12 @@ class RecipeLibraryViewModel @Inject constructor(
                     }
                     
                     _uiState.value = _uiState.value.copy(
-                        message = "Recipe duplicated successfully"
+                        message = "Recipe duplicated successfully!"
                     )
+                    
+                    // Clear message after 3 seconds
+                    kotlinx.coroutines.delay(3000)
+                    _uiState.value = _uiState.value.copy(message = null)
                 } else {
                     _uiState.value = _uiState.value.copy(
                         error = "Recipe not found"
@@ -108,6 +164,10 @@ class RecipeLibraryViewModel @Inject constructor(
                         updatedAt = System.currentTimeMillis()
                     )
                     recipeDao.updateRecipe(updatedRecipe)
+                    
+                    // Clear message after 3 seconds
+                    kotlinx.coroutines.delay(3000)
+                    _uiState.value = _uiState.value.copy(message = null)
                 } else {
                     _uiState.value = _uiState.value.copy(
                         error = "Recipe not found"
@@ -131,8 +191,13 @@ class RecipeLibraryViewModel @Inject constructor(
                 recipeDao.deleteRecipeById(recipeId)
                 
                 _uiState.value = _uiState.value.copy(
-                    message = "Recipe deleted successfully"
+                    message = "Recipe deleted successfully!"
                 )
+                
+                // Clear message after 3 seconds
+                kotlinx.coroutines.delay(3000)
+                _uiState.value = _uiState.value.copy(message = null)
+                
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Error deleting recipe: ${e.message}"
@@ -141,47 +206,28 @@ class RecipeLibraryViewModel @Inject constructor(
         }
     }
     
-    fun searchRecipes(query: String) {
+    fun toggleFavorite(recipeId: String) {
         viewModelScope.launch {
             try {
-                if (query.isBlank()) {
-                    // Load all recipes if query is empty
-                    loadRecipes()
-                } else {
-                    recipeDao.searchRecipesByName(query)
-                        .collect { recipes ->
-                            _uiState.value = _uiState.value.copy(
-                                recipes = recipes,
-                                searchQuery = query
-                            )
-                        }
+                val recipe = recipeDao.getRecipeById(recipeId)
+                if (recipe != null) {
+                    val updatedRecipe = recipe.copy(
+                        isFavorite = !recipe.isFavorite,
+                        updatedAt = System.currentTimeMillis()
+                    )
+                    recipeDao.updateRecipe(updatedRecipe)
+                    
+                    _uiState.value = _uiState.value.copy(
+                        message = if (updatedRecipe.isFavorite) "Added to favorites" else "Removed from favorites"
+                    )
+                    
+                    // Clear message after 2 seconds
+                    kotlinx.coroutines.delay(2000)
+                    _uiState.value = _uiState.value.copy(message = null)
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Error searching recipes: ${e.message}"
-                )
-            }
-        }
-    }
-    
-    fun filterRecipesByType(beverageType: BeverageType?) {
-        viewModelScope.launch {
-            try {
-                if (beverageType == null) {
-                    // Load all recipes if no filter
-                    loadRecipes()
-                } else {
-                    recipeDao.getRecipesByBeverageType(beverageType)
-                        .collect { recipes ->
-                            _uiState.value = _uiState.value.copy(
-                                recipes = recipes,
-                                filterType = beverageType
-                            )
-                        }
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = "Error filtering recipes: ${e.message}"
+                    error = "Error toggling favorite: ${e.message}"
                 )
             }
         }
@@ -200,7 +246,7 @@ data class RecipeLibraryUiState(
     val recipes: List<Recipe> = emptyList(),
     val isLoading: Boolean = true,
     val searchQuery: String = "",
-    val filterType: BeverageType? = null,
+    val selectedBeverageType: BeverageType? = null,
     val message: String? = null,
     val error: String? = null
 )

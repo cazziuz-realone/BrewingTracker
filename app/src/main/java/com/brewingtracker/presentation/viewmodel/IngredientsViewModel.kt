@@ -143,4 +143,4 @@ class IngredientsViewModel @Inject constructor(
     fun getBeverageTypes(): List<String> {
         return listOf("beer", "mead", "wine", "cider", "kombucha")
     }
-}
+)

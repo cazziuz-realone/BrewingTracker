@@ -1,412 +1,303 @@
 package com.brewingtracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.brewingtracker.domain.calculator.BrewingCalculations
-import com.brewingtracker.domain.calculator.SugarType
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
+import kotlin.math.*
 
 @HiltViewModel
 class CalculatorViewModel @Inject constructor() : ViewModel() {
-
-    // ABV Calculator State
-    private val _abvState = MutableStateFlow(ABVCalculatorState())
-    val abvState: StateFlow<ABVCalculatorState> = _abvState.asStateFlow()
-
-    // IBU Calculator State
-    private val _ibuState = MutableStateFlow(IBUCalculatorState())
-    val ibuState: StateFlow<IBUCalculatorState> = _ibuState.asStateFlow()
-
-    // SRM Calculator State
-    private val _srmState = MutableStateFlow(SRMCalculatorState())
-    val srmState: StateFlow<SRMCalculatorState> = _srmState.asStateFlow()
-
-    // Priming Sugar Calculator State
-    private val _primingState = MutableStateFlow(PrimingCalculatorState())
-    val primingState: StateFlow<PrimingCalculatorState> = _primingState.asStateFlow()
-
-    // Brix Converter State
-    private val _brixState = MutableStateFlow(BrixConverterState())
-    val brixState: StateFlow<BrixConverterState> = _brixState.asStateFlow()
-
-    // Water Calculator State
-    private val _waterState = MutableStateFlow(WaterCalculatorState())
-    val waterState: StateFlow<WaterCalculatorState> = _waterState.asStateFlow()
-
-    // ==========================================
-    // ABV CALCULATOR FUNCTIONS
-    // ==========================================
-
-    fun updateOriginalGravity(value: String) {
-        _abvState.value = _abvState.value.copy(originalGravity = value)
-        calculateABV()
-    }
-
-    fun updateFinalGravity(value: String) {
-        _abvState.value = _abvState.value.copy(finalGravity = value)
-        calculateABV()
-    }
-
-    private fun calculateABV() {
-        val state = _abvState.value
-        val og = state.originalGravity.toDoubleOrNull()
-        val fg = state.finalGravity.toDoubleOrNull()
-
-        if (og != null && fg != null && og > fg && og >= 1.0 && fg >= 1.0) {
-            val abv = BrewingCalculations.calculateABVWithCorrection(og, fg)
-            val attenuation = BrewingCalculations.calculateAttenuation(og, fg)
-            _abvState.value = state.copy(
-                calculatedABV = abv,
-                attenuation = attenuation,
-                isValid = true
-            )
-        } else {
-            _abvState.value = state.copy(
-                calculatedABV = null,
-                attenuation = null,
-                isValid = false
-            )
-        }
-    }
-
-    // ==========================================
-    // IBU CALCULATOR FUNCTIONS
-    // ==========================================
-
-    fun updateAlphaAcid(value: String) {
-        _ibuState.value = _ibuState.value.copy(alphaAcid = value)
-        calculateIBU()
-    }
-
-    fun updateHopWeight(value: String) {
-        _ibuState.value = _ibuState.value.copy(hopWeight = value)
-        calculateIBU()
-    }
-
-    fun updateBatchSize(value: String) {
-        _ibuState.value = _ibuState.value.copy(batchSize = value)
-        calculateIBU()
-    }
-
-    fun updateBoilTime(value: String) {
-        _ibuState.value = _ibuState.value.copy(boilTime = value)
-        calculateIBU()
-    }
-
-    fun updateBoilGravity(value: String) {
-        _ibuState.value = _ibuState.value.copy(boilGravity = value)
-        calculateIBU()
-    }
-
-    private fun calculateIBU() {
-        val state = _ibuState.value
-        val alpha = state.alphaAcid.toDoubleOrNull()
-        val weight = state.hopWeight.toDoubleOrNull()
-        val batchSize = state.batchSize.toDoubleOrNull()
-        val boilTime = state.boilTime.toIntOrNull()
-        val gravity = state.boilGravity.toDoubleOrNull()
-
-        if (alpha != null && weight != null && batchSize != null && 
-            boilTime != null && gravity != null &&
-            alpha > 0 && weight > 0 && batchSize > 0 && boilTime >= 0 && gravity >= 1.0) {
-            
-            val ibu = BrewingCalculations.calculateIBU(alpha, weight, batchSize, boilTime, gravity)
-            _ibuState.value = state.copy(
-                calculatedIBU = ibu,
-                isValid = true
-            )
-        } else {
-            _ibuState.value = state.copy(
-                calculatedIBU = null,
-                isValid = false
-            )
-        }
-    }
-
-    // ==========================================
-    // PRIMING SUGAR CALCULATOR FUNCTIONS
-    // ==========================================
-
-    fun updateBeerVolume(value: String) {
-        _primingState.value = _primingState.value.copy(beerVolume = value)
-        calculatePrimingSugar()
-    }
-
-    fun updateCurrentTemp(value: String) {
-        _primingState.value = _primingState.value.copy(currentTemp = value)
-        calculatePrimingSugar()
-    }
-
-    fun updateTargetCO2(value: String) {
-        _primingState.value = _primingState.value.copy(targetCO2 = value)
-        calculatePrimingSugar()
-    }
-
-    fun updateSugarType(sugarType: SugarType) {
-        _primingState.value = _primingState.value.copy(sugarType = sugarType)
-        calculatePrimingSugar()
-    }
-
-    private fun calculatePrimingSugar() {
-        val state = _primingState.value
-        val volume = state.beerVolume.toDoubleOrNull()
-        val temp = state.currentTemp.toDoubleOrNull()
-        val co2 = state.targetCO2.toDoubleOrNull()
-
-        if (volume != null && temp != null && co2 != null &&
-            volume > 0 && temp > 0 && co2 > 0) {
-            
-            val sugar = BrewingCalculations.calculatePrimingSugar(volume, temp, co2, state.sugarType)
-            _primingState.value = state.copy(
-                calculatedSugar = sugar,
-                isValid = true
-            )
-        } else {
-            _primingState.value = state.copy(
-                calculatedSugar = null,
-                isValid = false
-            )
-        }
-    }
-
-    // ==========================================
-    // BRIX CONVERTER FUNCTIONS
-    // ==========================================
-
-    fun updateBrixValue(value: String) {
-        _brixState.value = _brixState.value.copy(brixValue = value)
-        convertBrixToSG()
-    }
-
-    fun updateSGValue(value: String) {
-        _brixState.value = _brixState.value.copy(sgValue = value)
-        convertSGToBrix()
-    }
-
-    private fun convertBrixToSG() {
-        val brix = _brixState.value.brixValue.toDoubleOrNull()
-        if (brix != null && brix >= 0) {
-            val sg = BrewingCalculations.brixToSpecificGravity(brix)
-            _brixState.value = _brixState.value.copy(
-                convertedSG = String.format("%.3f", sg),
-                isValid = true
-            )
-        } else {
-            _brixState.value = _brixState.value.copy(
-                convertedSG = "",
-                isValid = false
-            )
-        }
-    }
-
-    private fun convertSGToBrix() {
-        val sg = _brixState.value.sgValue.toDoubleOrNull()
-        if (sg != null && sg >= 1.0) {
-            val brix = BrewingCalculations.specificGravityToBrix(sg)
-            _brixState.value = _brixState.value.copy(
-                convertedBrix = String.format("%.1f", brix),
-                isValid = true
-            )
-        } else {
-            _brixState.value = _brixState.value.copy(
-                convertedBrix = "",
-                isValid = false
-            )
-        }
-    }
-
-    // ==========================================
-    // WATER CALCULATOR FUNCTIONS
-    // ==========================================
-
-    fun updateGrainWeight(value: String) {
-        _waterState.value = _waterState.value.copy(grainWeight = value)
-        calculateWaterAmounts()
-    }
-
-    fun updateMashRatio(value: String) {
-        _waterState.value = _waterState.value.copy(mashRatio = value)
-        calculateWaterAmounts()
-    }
-
-    fun updateTotalWater(value: String) {
-        _waterState.value = _waterState.value.copy(totalWater = value)
-        calculateWaterAmounts()
-    }
-
-    fun updateGrainAbsorption(value: String) {
-        _waterState.value = _waterState.value.copy(grainAbsorption = value)
-        calculateWaterAmounts()
-    }
-
-    fun updateBoilOffRate(value: String) {
-        _waterState.value = _waterState.value.copy(boilOffRate = value)
-        calculateWaterAmounts()
-    }
-
-    // FIXED: Renamed from updateBoilTime to updateWaterBoilTime to avoid conflicts
-    fun updateWaterBoilTime(value: String) {
-        _waterState.value = _waterState.value.copy(boilTime = value)
-        calculateWaterAmounts()
-    }
-
-    fun updateGrainTemp(value: String) {
-        _waterState.value = _waterState.value.copy(grainTemp = value)
-        calculateStrikeTemp()
-    }
-
-    fun updateTargetMashTemp(value: String) {
-        _waterState.value = _waterState.value.copy(targetMashTemp = value)
-        calculateStrikeTemp()
-    }
-
-    private fun calculateWaterAmounts() {
-        val state = _waterState.value
-        val grainWeight = state.grainWeight.toDoubleOrNull()
-        val mashRatio = state.mashRatio.toDoubleOrNull()
-        val totalWater = state.totalWater.toDoubleOrNull()
-        val grainAbsorption = state.grainAbsorption.toDoubleOrNull()
-        val boilOffRate = state.boilOffRate.toDoubleOrNull()
-        val boilTime = state.boilTime.toDoubleOrNull()
-
-        if (grainWeight != null && grainWeight > 0 && mashRatio != null && mashRatio > 0) {
-            val mashWater = BrewingCalculations.calculateMashWater(grainWeight, mashRatio)
-
-            val spargeWater = if (totalWater != null && totalWater > 0 &&
-                grainAbsorption != null && grainAbsorption > 0 &&
-                boilOffRate != null && boilOffRate > 0 &&
-                boilTime != null && boilTime > 0) {
-                BrewingCalculations.calculateSpargeWater(
-                    totalWater, mashWater, grainWeight, grainAbsorption, boilOffRate, boilTime
+    
+    private val _uiState = MutableStateFlow(CalculatorUiState())
+    val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
+    
+    fun calculateAlcoholByVolume(originalGravity: Double, finalGravity: Double) {
+        viewModelScope.launch {
+            try {
+                if (originalGravity <= finalGravity) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Original gravity must be higher than final gravity",
+                        abvResult = null
+                    )
+                    return@launch
+                }
+                
+                // Standard ABV formula: (OG - FG) * 131.25
+                val abv = (originalGravity - finalGravity) * 131.25
+                
+                _uiState.value = _uiState.value.copy(
+                    abvResult = ABVResult(
+                        alcoholByVolume = abv,
+                        originalGravity = originalGravity,
+                        finalGravity = finalGravity,
+                        attenuation = ((originalGravity - finalGravity) / (originalGravity - 1.0)) * 100
+                    ),
+                    error = null
                 )
-            } else null
-
-            _waterState.value = state.copy(
-                calculatedMashWater = mashWater,
-                calculatedSpargeWater = spargeWater,
-                isValid = true
-            )
-        } else {
-            _waterState.value = state.copy(
-                calculatedMashWater = null,
-                calculatedSpargeWater = null,
-                isValid = false
-            )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating ABV: ${e.message}",
+                    abvResult = null
+                )
+            }
         }
     }
-
-    private fun calculateStrikeTemp() {
-        val state = _waterState.value
-        val grainTemp = state.grainTemp.toDoubleOrNull()
-        val targetMashTemp = state.targetMashTemp.toDoubleOrNull()
-        val mashRatio = state.mashRatio.toDoubleOrNull()
-
-        if (grainTemp != null && targetMashTemp != null && mashRatio != null &&
-            grainTemp > 0 && targetMashTemp > grainTemp && mashRatio > 0) {
-            
-            val strikeTemp = BrewingCalculations.calculateStrikeWaterTemp(
-                grainTemp, targetMashTemp, mashRatio
-            )
-            
-            _waterState.value = state.copy(
-                calculatedStrikeTemp = strikeTemp
-            )
-        } else {
-            _waterState.value = state.copy(
-                calculatedStrikeTemp = null
-            )
+    
+    fun calculateGravityFromBrix(brix: Double) {
+        viewModelScope.launch {
+            try {
+                // Convert Brix to Specific Gravity using: SG = (Brix / (258.6-((Brix / 258.2)*227.1))) + 1
+                val specificGravity = (brix / (258.6 - ((brix / 258.2) * 227.1))) + 1
+                
+                _uiState.value = _uiState.value.copy(
+                    brixResult = BrixResult(
+                        brix = brix,
+                        specificGravity = specificGravity,
+                        plato = brix // Brix ≈ Plato for practical purposes
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error converting Brix: ${e.message}",
+                    brixResult = null
+                )
+            }
         }
     }
-
-    // Reset functions
-    fun resetABVCalculator() {
-        _abvState.value = ABVCalculatorState()
+    
+    fun calculatePotentialAlcohol(originalGravity: Double) {
+        viewModelScope.launch {
+            try {
+                // Assuming complete fermentation to 1.000
+                val potentialABV = (originalGravity - 1.000) * 131.25
+                
+                _uiState.value = _uiState.value.copy(
+                    potentialAlcoholResult = PotentialAlcoholResult(
+                        originalGravity = originalGravity,
+                        potentialABV = potentialABV,
+                        sugarContent = (originalGravity - 1.000) * 1000 // gravity points
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating potential alcohol: ${e.message}",
+                    potentialAlcoholResult = null
+                )
+            }
+        }
     }
-
-    fun resetIBUCalculator() {
-        _ibuState.value = IBUCalculatorState()
+    
+    fun calculateHydrometer(temperature: Double, reading: Double, calibrationTemp: Double = 20.0) {
+        viewModelScope.launch {
+            try {
+                // Temperature correction formula for hydrometers
+                // Corrected SG = Reading + (0.000013 * (Temperature - Calibration Temperature) * Reading)
+                val temperatureDifference = temperature - calibrationTemp
+                val correctedGravity = reading + (0.000013 * temperatureDifference * reading)
+                
+                _uiState.value = _uiState.value.copy(
+                    hydrometerResult = HydrometerResult(
+                        measuredGravity = reading,
+                        temperature = temperature,
+                        calibrationTemperature = calibrationTemp,
+                        correctedGravity = correctedGravity,
+                        temperatureCorrection = correctedGravity - reading
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating hydrometer correction: ${e.message}",
+                    hydrometerResult = null
+                )
+            }
+        }
     }
-
-    fun resetPrimingCalculator() {
-        _primingState.value = PrimingCalculatorState()
+    
+    fun calculateDilution(currentVolume: Double, currentABV: Double, targetABV: Double) {
+        viewModelScope.launch {
+            try {
+                if (targetABV >= currentABV) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Target ABV must be lower than current ABV for dilution",
+                        dilutionResult = null
+                    )
+                    return@launch
+                }
+                
+                // Calculate water needed: Water = (Current Volume * Current ABV / Target ABV) - Current Volume
+                val finalVolume = (currentVolume * currentABV) / targetABV
+                val waterToAdd = finalVolume - currentVolume
+                
+                _uiState.value = _uiState.value.copy(
+                    dilutionResult = DilutionResult(
+                        currentVolume = currentVolume,
+                        currentABV = currentABV,
+                        targetABV = targetABV,
+                        waterToAdd = waterToAdd,
+                        finalVolume = finalVolume
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating dilution: ${e.message}",
+                    dilutionResult = null
+                )
+            }
+        }
     }
-
-    fun resetBrixConverter() {
-        _brixState.value = BrixConverterState()
+    
+    fun calculateCarbonation(temperature: Double, desiredVolumes: Double) {
+        viewModelScope.launch {
+            try {
+                // Calculate CO2 pressure needed
+                // Using formula: Pressure = (Desired CO2 - Residual CO2) / Solubility
+                
+                // Residual CO2 at given temperature (approximate)
+                val residualCO2 = 0.5 + (0.01 * temperature)
+                
+                // CO2 solubility factor (temperature dependent)
+                val solubilityFactor = 0.5 + (0.02 * temperature)
+                
+                val pressureNeeded = (desiredVolumes - residualCO2) / solubilityFactor
+                
+                // Calculate priming sugar needed (corn sugar)
+                // Approximately 0.5 oz per gallon per volume of CO2
+                val primingSugar = desiredVolumes * 0.5
+                
+                _uiState.value = _uiState.value.copy(
+                    carbonationResult = CarbonationResult(
+                        temperature = temperature,
+                        desiredVolumes = desiredVolumes,
+                        pressureNeeded = max(0.0, pressureNeeded),
+                        primingSugarOzPerGallon = primingSugar,
+                        residualCO2 = residualCO2
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating carbonation: ${e.message}",
+                    carbonationResult = null
+                )
+            }
+        }
     }
-
-    fun resetWaterCalculator() {
-        _waterState.value = WaterCalculatorState()
+    
+    fun calculateYeastStarter(targetCells: Double, viability: Double, packagedCells: Double) {
+        viewModelScope.launch {
+            try {
+                // Calculate how many packages needed
+                val viableCellsPerPackage = packagedCells * (viability / 100.0)
+                val packagesNeeded = ceil(targetCells / viableCellsPerPackage)
+                
+                // Calculate starter size if needed
+                val totalViableCells = packagesNeeded * viableCellsPerPackage
+                val needsStarter = totalViableCells < targetCells
+                
+                val starterSize = if (needsStarter) {
+                    // Approximate starter size calculation
+                    val cellGrowthNeeded = targetCells - totalViableCells
+                    cellGrowthNeeded * 0.1 // Rough calculation: 0.1L per billion cells
+                } else {
+                    0.0
+                }
+                
+                _uiState.value = _uiState.value.copy(
+                    yeastResult = YeastResult(
+                        targetCells = targetCells,
+                        viability = viability,
+                        packagedCells = packagedCells,
+                        packagesNeeded = packagesNeeded.toInt(),
+                        needsStarter = needsStarter,
+                        starterSizeLiters = starterSize
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating yeast requirements: ${e.message}",
+                    yeastResult = null
+                )
+            }
+        }
+    }
+    
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun clearResults() {
+        _uiState.value = CalculatorUiState()
     }
 }
 
-// ==========================================
-// STATE DATA CLASSES
-// ==========================================
-
-data class ABVCalculatorState(
-    val originalGravity: String = "",
-    val finalGravity: String = "",
-    val calculatedABV: Double? = null,
-    val attenuation: Double? = null,
-    val isValid: Boolean = false
+data class CalculatorUiState(
+    val abvResult: ABVResult? = null,
+    val brixResult: BrixResult? = null,
+    val potentialAlcoholResult: PotentialAlcoholResult? = null,
+    val hydrometerResult: HydrometerResult? = null,
+    val dilutionResult: DilutionResult? = null,
+    val carbonationResult: CarbonationResult? = null,
+    val yeastResult: YeastResult? = null,
+    val error: String? = null
 )
 
-data class IBUCalculatorState(
-    val alphaAcid: String = "",
-    val hopWeight: String = "",
-    val batchSize: String = "",
-    val boilTime: String = "",
-    val boilGravity: String = "",
-    val calculatedIBU: Double? = null,
-    val isValid: Boolean = false
+data class ABVResult(
+    val alcoholByVolume: Double,
+    val originalGravity: Double,
+    val finalGravity: Double,
+    val attenuation: Double
 )
 
-data class SRMCalculatorState(
-    val grainEntries: List<GrainEntry> = emptyList(),
-    val batchSize: String = "",
-    val calculatedSRM: Double? = null,
-    val calculatedEBC: Double? = null,
-    val isValid: Boolean = false
+data class BrixResult(
+    val brix: Double,
+    val specificGravity: Double,
+    val plato: Double
 )
 
-data class GrainEntry(
-    val weight: String = "",
-    val colorLovibond: String = "",
-    val name: String = ""
+data class PotentialAlcoholResult(
+    val originalGravity: Double,
+    val potentialABV: Double,
+    val sugarContent: Double
 )
 
-data class PrimingCalculatorState(
-    val beerVolume: String = "",
-    val currentTemp: String = "",
-    val targetCO2: String = "",
-    val sugarType: SugarType = SugarType.CORN_SUGAR,
-    val calculatedSugar: Double? = null,
-    val isValid: Boolean = false
+data class HydrometerResult(
+    val measuredGravity: Double,
+    val temperature: Double,
+    val calibrationTemperature: Double,
+    val correctedGravity: Double,
+    val temperatureCorrection: Double
 )
 
-data class BrixConverterState(
-    val brixValue: String = "",
-    val sgValue: String = "",
-    val convertedSG: String = "",
-    val convertedBrix: String = "",
-    val isValid: Boolean = false
+data class DilutionResult(
+    val currentVolume: Double,
+    val currentABV: Double,
+    val targetABV: Double,
+    val waterToAdd: Double,
+    val finalVolume: Double
 )
 
-data class WaterCalculatorState(
-    val grainWeight: String = "",
-    val mashRatio: String = "1.25",
-    val totalWater: String = "",
-    val grainAbsorption: String = "0.125",
-    val boilOffRate: String = "1.25", 
-    val boilTime: String = "1.0",
-    val grainTemp: String = "",
-    val targetMashTemp: String = "",
-    val calculatedMashWater: Double? = null,
-    val calculatedSpargeWater: Double? = null,
-    val calculatedStrikeTemp: Double? = null,
-    val isValid: Boolean = false
+data class CarbonationResult(
+    val temperature: Double,
+    val desiredVolumes: Double,
+    val pressureNeeded: Double,
+    val primingSugarOzPerGallon: Double,
+    val residualCO2: Double
+)
+
+data class YeastResult(
+    val targetCells: Double,
+    val viability: Double,
+    val packagedCells: Double,
+    val packagesNeeded: Int,
+    val needsStarter: Boolean,
+    val starterSizeLiters: Double
 )
