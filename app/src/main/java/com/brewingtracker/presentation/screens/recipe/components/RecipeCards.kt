@@ -45,34 +45,83 @@ fun BatchSizeCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
+            // FIXED: Better layout for batch size buttons with consistent sizing
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 BatchSize.values().forEach { size ->
+                    // FIXED: Use more consistent text and better sizing
                     FilterChip(
                         onClick = { onSizeChange(size) },
                         label = { 
-                            Text(
-                                text = "${size.displayName}\n${size.ozValue} oz",
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = when (size) {
+                                        BatchSize.QUART -> "Quart"
+                                        BatchSize.HALF_GALLON -> "½ Gal"
+                                        BatchSize.GALLON -> "1 Gal"
+                                        BatchSize.FIVE_GALLON -> "5 Gal"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "${size.ozValue} oz",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    textAlign = TextAlign.Center,
+                                    color = if (currentSize == size) 
+                                        MaterialTheme.colorScheme.onSecondaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         },
                         selected = currentSize == size,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp), // Fixed height for consistency
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     )
                 }
             }
             
-            // Scaling indicator
+            // FIXED: Better scaling indicator with improved styling
             if (currentSize != BatchSize.GALLON) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Scaling from 1 gallon base × ${currentSize.scaleFactor}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.ScaleIcon,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Scaling from 1 gallon base × ${currentSize.scaleFactor}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
     }
@@ -221,15 +270,35 @@ fun SelectedIngredientsCard(
                     fontWeight = FontWeight.Bold
                 )
                 
-                // Ingredient count badge
+                // Ingredient count badge with inventory status summary
                 if (ingredients.isNotEmpty()) {
-                    Badge(
-                        containerColor = MaterialTheme.colorScheme.primary
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${ingredients.size}",
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                        // Count of sufficient ingredients
+                        val sufficientCount = inventoryStatus.values.count { it == InventoryStatus.SUFFICIENT }
+                        val insufficientCount = inventoryStatus.values.count { it == InventoryStatus.INSUFFICIENT }
+                        
+                        if (insufficientCount > 0) {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ) {
+                                Text(
+                                    text = "⚠️ $insufficientCount",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                        
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                text = "${ingredients.size}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
             }
