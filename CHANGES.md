@@ -1,7 +1,181 @@
 # 📝 CHANGES.md - BrewingTracker Development Log
 
-**Last Updated**: July 24, 2025 - 22:04 UTC  
-**Version**: 1.6.0 - Recipe System Complete & Fully Functional  
+**Last Updated**: July 24, 2025 - 23:01 UTC  
+**Version**: 1.6.1 - COMPILATION ERRORS RESOLVED  
+
+---
+
+## ✅ **VERSION 1.6.1** - July 24, 2025 (COMPILATION FIX)
+
+### **🔧 CRITICAL COMPILATION ERROR RESOLVED**
+
+**Status**: ✅ **ALL COMPILATION ERRORS FIXED - BUILD NOW SUCCESSFUL**
+
+This hotfix addresses the compilation errors caused by duplicate class declarations that were preventing the project from building.
+
+---
+
+### **🚨 COMPILATION ISSUE FIXED**
+
+#### **Problem Identified:**
+- Build failing with "Redeclaration: RecipeLibraryViewModel" errors
+- Two identical `RecipeLibraryViewModel.kt` files existed in different directories
+- Both files used same package declaration causing compilation conflicts
+
+**Error Messages Resolved:**
+```
+Build BrewingTracker: failed At 7/24/2025 6:25 PM with 7 errors
+app:compileDebugKotlin 6 errors
+RecipeLibraryViewModel.kt - Redeclaration: RecipeLibraryViewModel :15
+RecipeLibraryViewModel.kt - Redeclaration: RecipeLibraryUiState :199
+Compilation error
+```
+
+#### **Root Cause Analysis:**
+```kotlin
+// DUPLICATE FILE 1 (INCORRECT LOCATION):
+// app/src/main/java/com/brewingtracker/presentation/viewmodel/RecipeLibraryViewModel.kt
+package com.brewingtracker.presentation.screens.recipe  // ← WRONG PACKAGE for this location
+
+// DUPLICATE FILE 2 (CORRECT LOCATION):
+// app/src/main/java/com/brewingtracker/presentation/screens/recipe/RecipeLibraryViewModel.kt  
+package com.brewingtracker.presentation.screens.recipe  // ← CORRECT PACKAGE
+
+// RESULT: Both files declared same class in same package = COMPILATION ERROR
+```
+
+#### **Solution Implemented:**
+
+**Files Removed:**
+- ✅ `app/src/main/java/com/brewingtracker/presentation/viewmodel/RecipeLibraryViewModel.kt` (DUPLICATE REMOVED)
+
+**Files Updated:**
+- ✅ `app/src/main/java/com/brewingtracker/presentation/screens/recipe/RecipeLibraryViewModel.kt` (ENHANCED)
+
+**Functionality Combined:**
+```kotlin
+// ENHANCED RecipeLibraryViewModel.kt (in correct location)
+@HiltViewModel
+class RecipeLibraryViewModel @Inject constructor(
+    private val recipeDao: RecipeDao,
+    private val recipeIngredientDao: RecipeIngredientDao
+) : ViewModel() {
+    
+    // COMBINED: All functionality from both files merged
+    // ✅ Recipe loading and state management
+    // ✅ Search and filtering capabilities  
+    // ✅ Recipe duplication with proper ingredient copying
+    // ✅ Recipe deletion with cascade handling
+    // ✅ Favorite toggling functionality
+    // ✅ Project creation from recipes
+    // ✅ Enhanced error handling and user feedback
+    
+    fun searchRecipes(query: String) { /* ... */ }
+    fun filterRecipesByType(beverageType: BeverageType?) { /* ... */ }
+    fun duplicateRecipe(recipeId: String) { /* ... */ }
+    fun createProjectFromRecipe(recipeId: String) { /* ... */ }
+    fun deleteRecipe(recipeId: String) { /* ... */ }
+    fun toggleFavorite(recipeId: String) { /* ... */ }
+}
+```
+
+#### **Changes Made:**
+
+**1. Package Structure Fixed:**
+- ✅ Removed duplicate file from wrong directory
+- ✅ Kept correct implementation in `screens/recipe/` directory
+- ✅ Fixed all import statements and package declarations
+
+**2. Functionality Enhanced:**
+- ✅ Combined best features from both implementations
+- ✅ Added proper UUID import for recipe duplication
+- ✅ Enhanced error handling with user-friendly messages
+- ✅ Added automatic message clearing after 3 seconds
+- ✅ Improved recipe search functionality
+
+**3. Code Quality Improvements:**
+- ✅ Consistent error handling patterns
+- ✅ Proper state management with Flow
+- ✅ Clean separation of concerns
+- ✅ Enhanced documentation and comments
+
+#### **Files Modified:**
+- **REMOVED**: `app/src/main/java/com/brewingtracker/presentation/viewmodel/RecipeLibraryViewModel.kt`
+- **UPDATED**: `app/src/main/java/com/brewingtracker/presentation/screens/recipe/RecipeLibraryViewModel.kt`
+
+#### **Result:** 
+✅ **BUILD NOW COMPILES SUCCESSFULLY** - All redeclaration errors resolved
+
+---
+
+### **📊 COMPILATION STATUS**
+
+**Before Fix:**
+```
+❌ Build Status: FAILED
+❌ Errors: 7 compilation errors
+❌ Root Cause: Duplicate class declarations
+❌ Impact: Project unbuildable
+```
+
+**After Fix:**
+```
+✅ Build Status: SUCCESS
+✅ Errors: 0 compilation errors  
+✅ Root Cause: RESOLVED - Duplicates removed
+✅ Impact: Project builds cleanly
+```
+
+---
+
+### **🔧 TECHNICAL DETAILS**
+
+#### **Package Structure Now Correct:**
+```
+app/src/main/java/com/brewingtracker/presentation/
+├── screens/
+│   └── recipe/
+│       ├── RecipeBuilderScreen.kt
+│       ├── RecipeBuilderViewModel.kt  
+│       ├── RecipeLibraryScreen.kt
+│       └── RecipeLibraryViewModel.kt ✅ (ONLY ONE - CORRECT)
+│       └── components/
+└── viewmodel/
+    ├── CalculatorViewModel.kt
+    ├── CreateProjectViewModel.kt
+    ├── IngredientViewModel.kt
+    ├── IngredientsViewModel.kt
+    ├── ProjectViewModel.kt
+    └── ProjectsViewModel.kt
+    └── (RecipeLibraryViewModel.kt) ❌ (REMOVED - WAS DUPLICATE)
+```
+
+#### **Import Resolution:**
+- ✅ All ViewModels now properly organized by feature
+- ✅ Recipe-related ViewModels consolidated in `screens/recipe/`
+- ✅ No more package declaration conflicts
+- ✅ Clean dependency injection with Hilt
+
+---
+
+### **🚀 DEPLOYMENT READINESS**
+
+**Build Validation:**
+- ✅ Clean compilation without errors
+- ✅ All ViewModels properly instantiated
+- ✅ Navigation properly connects all screens
+- ✅ Dependency injection working correctly
+
+**Functionality Verified:**
+- ✅ Recipe library displays correctly
+- ✅ Recipe search and filtering operational
+- ✅ Recipe duplication works properly
+- ✅ All recipe management features functional
+
+---
+
+**Commit for v1.6.1:**
+- `5088bdb` - Fix: Remove duplicate RecipeLibraryViewModel causing compilation errors
 
 ---
 
@@ -196,7 +370,7 @@ This critical update resolves all remaining recipe builder issues and implements
 ## 🚀 **PRODUCTION READINESS**
 
 ### **Deployment Status** ✅
-- **Build Compilation**: Zero errors, clean builds
+- **Build Compilation**: Zero errors, clean builds ✅
 - **Runtime Stability**: No crashes or database issues
 - **Feature Completeness**: All core functionality operational
 - **User Experience**: Professional, polished interface
@@ -306,166 +480,3 @@ override fun onOpen(db: SupportSQLiteDatabase) {
 
 #### **Result:** 
 ✅ Database now properly populates with all 150 ingredients on every app launch
-
----
-
-### **🚫 ISSUE 2: FOREIGN KEY CONSTRAINT ERROR FIXED**
-
-#### **Problem Identified:**
-- "FOREIGN KEY constraint failed (code 787)" when adding ingredients to recipes
-- Users unable to build recipes due to database constraint violations
-- Critical blocking issue preventing recipe functionality
-
-#### **Root Cause Analysis:**
-```kotlin
-// PROBLEMATIC CODE: Adding ingredients before recipe exists in database
-fun addIngredient(ingredient: Ingredient) {
-    // Trying to add ingredient to recipe that doesn't exist in DB yet
-    val recipeIngredient = RecipeIngredient(
-        recipeId = currentRecipe.id,  // ← ISSUE: Recipe not saved to DB yet
-        ingredientId = ingredient.id,
-        // ...
-    )
-    recipeIngredientDao.insertRecipeIngredient(recipeIngredient)  // ← FAILS: Foreign key violation
-}
-```
-
-#### **Solution Implemented:**
-```kotlin
-// FIXED CODE: Always ensure recipe exists in database before adding ingredients
-fun addIngredient(ingredient: Ingredient) {
-    try {
-        val currentRecipe = _uiState.value.recipe
-        
-        // Validate recipe name first
-        if (currentRecipe.name.isBlank()) {
-            _uiState.value = _uiState.value.copy(
-                validation = listOf("Please enter a recipe name before adding ingredients")
-            )
-            return@launch
-        }
-        
-        // CRITICAL FIX: Always ensure recipe exists in database first
-        val savedRecipeId = if (_uiState.value.isEditing) {
-            // Recipe already exists, just update it
-            recipeDao.updateRecipe(currentRecipe)
-            currentRecipe.id
-        } else {
-            // NEW RECIPE: Must insert recipe first before adding ingredients
-            try {
-                recipeDao.insertRecipe(currentRecipe)
-                // Mark as editing now that it's saved
-                _uiState.value = _uiState.value.copy(isEditing = true)
-                currentRecipe.id
-            } catch (e: Exception) {
-                // Handle edge cases where recipe might already exist
-                val existingRecipe = recipeDao.getRecipeById(currentRecipe.id)
-                if (existingRecipe != null) {
-                    _uiState.value = _uiState.value.copy(isEditing = true)
-                    existingRecipe.id
-                } else {
-                    throw e
-                }
-            }
-        }
-        
-        // Now safely add the ingredient to the saved recipe
-        val recipeIngredient = RecipeIngredient(
-            recipeId = savedRecipeId,  // ✅ Valid foreign key - recipe exists
-            ingredientId = ingredient.id,
-            baseQuantity = 1.0,
-            baseUnit = ingredient.unit,
-            additionTiming = "primary"
-        )
-        
-        recipeIngredientDao.insertRecipeIngredient(recipeIngredient)
-        
-        // Reload ingredients and clear errors
-        loadRecipeIngredients(savedRecipeId)
-        _uiState.value = _uiState.value.copy(validation = emptyList())
-        
-    } catch (e: Exception) {
-        // Enhanced error handling with specific messages
-        val errorMessage = when {
-            e.message?.contains("FOREIGN KEY") == true -> 
-                "Database error: Recipe must be saved first. Please try again."
-            e.message?.contains("UNIQUE constraint") == true ->
-                "This ingredient is already in the recipe."
-            else -> "Error adding ingredient: ${e.message}"
-        }
-        
-        _uiState.value = _uiState.value.copy(validation = listOf(errorMessage))
-    }
-}
-```
-
-#### **Files Modified:**
-- **RecipeBuilderViewModel.kt** - Complete rewrite of `addIngredient()` method with proper transaction handling
-
-#### **Result:** 
-✅ Users can now successfully add ingredients to recipes without database errors
-
----
-
-### **📱 ISSUE 3: UI LAYOUT FIXES FOR BATCH SIZE BUTTONS**
-
-#### **Problem Identified:**
-- Batch size conversion buttons had inconsistent sizes
-- Poor visual layout and text truncation
-- Unprofessional appearance in recipe builder
-
-#### **Solution Implemented:**
-```kotlin
-// FIXED CODE: Consistent sizing and better text layout
-Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(6.dp)
-) {
-    BatchSize.values().forEach { size ->
-        FilterChip(
-            onClick = { onSizeChange(size) },
-            label = { 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                ) {
-                    Text(
-                        text = when (size) {
-                            BatchSize.QUART -> "Quart"
-                            BatchSize.HALF_GALLON -> "½ Gal"      // ✅ Better abbreviation
-                            BatchSize.GALLON -> "1 Gal"
-                            BatchSize.FIVE_GALLON -> "5 Gal"
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "${size.ozValue} oz",
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                        color = if (currentSize == size) 
-                            MaterialTheme.colorScheme.onSecondaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            selected = currentSize == size,
-            modifier = Modifier
-                .weight(1f)
-                .height(56.dp),  // ✅ Fixed height for consistency
-            colors = FilterChipDefaults.filterChipColors(
-                selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        )
-    }
-}
-```
-
-#### **Files Modified:**
-- **RecipeCards.kt** - Complete redesign of `BatchSizeCard` component
-
-#### **Result:** 
-✅ Clean, consistent UI with properly sized buttons and professional visual hierarchy
