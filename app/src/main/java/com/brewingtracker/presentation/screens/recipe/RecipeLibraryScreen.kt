@@ -1,9 +1,9 @@
 package com.brewingtracker.presentation.screens.recipe
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,11 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.brewingtracker.data.database.entities.*
+import com.brewingtracker.presentation.screens.recipe.components.formatQuantity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,7 +28,7 @@ fun RecipeLibraryScreen(
     viewModel: RecipeLibraryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -37,9 +39,14 @@ fun RecipeLibraryScreen(
                     ) 
                 },
                 actions = {
-                    // Search functionality can be added here later
-                    IconButton(onClick = { /* TODO: Add search */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    // Search button
+                    IconButton(onClick = { /* TODO: Implement search */ }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search recipes")
+                    }
+                    
+                    // Filter button  
+                    IconButton(onClick = { /* TODO: Implement filter */ }) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Filter recipes")
                     }
                 }
             )
@@ -54,69 +61,104 @@ fun RecipeLibraryScreen(
         }
     ) { paddingValues ->
         
-        if (uiState.recipes.isEmpty()) {
-            // Empty state
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            
+            // Recipe count and summary
+            Card(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
-                Icon(
-                    Icons.Default.MenuBook,
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "No Recipes Yet",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                Text(
-                    text = "Create your first brewing recipe to get started",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Button(
-                    onClick = { navController.navigate("recipe_builder") }
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Create Recipe")
+                    Icon(
+                        Icons.Default.MenuBook,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "${uiState.recipes.size} Recipes",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Your brewing recipe collection",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
-        } else {
-            // Recipe list
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.recipes) { recipe ->
-                    RecipeLibraryCard(
-                        recipe = recipe,
-                        onClick = { 
-                            navController.navigate("recipe_detail/${recipe.id}")
-                        },
-                        onEdit = { 
-                            navController.navigate("recipe_builder/${recipe.id}")
-                        },
-                        onDuplicate = { 
-                            viewModel.duplicateRecipe(recipe.id)
+
+            if (uiState.recipes.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.MenuBook,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No Recipes Yet",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Create your first brewing recipe to get started",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = { navController.navigate("recipe_builder") }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Create Recipe")
                         }
-                    )
+                    }
+                }
+            } else {
+                // Recipe grid
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 300.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(uiState.recipes) { recipe ->
+                        RecipeLibraryCard(
+                            recipe = recipe,
+                            onClick = { navController.navigate("recipe_detail/${recipe.id}") },
+                            onEdit = { navController.navigate("recipe_builder/${recipe.id}") },
+                            onDuplicate = { viewModel.duplicateRecipe(recipe.id) },
+                            onCreateProject = { viewModel.createProjectFromRecipe(recipe.id) }
+                        )
+                    }
                 }
             }
         }
@@ -129,18 +171,19 @@ fun RecipeLibraryCard(
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
+    onCreateProject: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Header with title and difficulty
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -151,7 +194,7 @@ fun RecipeLibraryCard(
                         text = recipe.name,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     
@@ -161,9 +204,9 @@ fun RecipeLibraryCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                     
-                    recipe.style?.let {
+                    recipe.style?.let { style ->
                         Text(
-                            text = it,
+                            text = style,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -171,52 +214,45 @@ fun RecipeLibraryCard(
                 }
                 
                 // Difficulty badge
-                AssistChip(
-                    onClick = { },
-                    label = { 
-                        Text(
-                            text = recipe.difficulty.name,
-                            style = MaterialTheme.typography.labelSmall
-                        ) 
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = when (recipe.difficulty) {
-                            RecipeDifficulty.BEGINNER -> Color(0xFF4CAF50).copy(alpha = 0.1f)
-                            RecipeDifficulty.INTERMEDIATE -> Color(0xFFFF9800).copy(alpha = 0.1f)
-                            RecipeDifficulty.ADVANCED -> Color(0xFFF44336).copy(alpha = 0.1f)
-                        },
-                        labelColor = when (recipe.difficulty) {
-                            RecipeDifficulty.BEGINNER -> Color(0xFF2E7D32)
-                            RecipeDifficulty.INTERMEDIATE -> Color(0xFFE65100)
-                            RecipeDifficulty.ADVANCED -> Color(0xFFC62828)
-                        }
-                    )
-                )
+                DifficultyBadge(difficulty = recipe.difficulty)
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Recipe stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                recipe.targetABV?.let {
-                    StatChip(label = "ABV", value = "${String.format("%.1f", it)}%")
+                recipe.targetABV?.let { abv ->
+                    StatChip(
+                        label = "ABV",
+                        value = "${abv.formatQuantity()}%",
+                        modifier = Modifier.weight(1f)
+                    )
                 }
                 
-                recipe.estimatedTimeWeeks?.let {
-                    StatChip(label = "Time", value = "${it}w")
+                recipe.estimatedTimeWeeks?.let { weeks ->
+                    StatChip(
+                        label = "Time",
+                        value = "${weeks}w",
+                        modifier = Modifier.weight(1f)
+                    )
                 }
                 
-                StatChip(label = "Used", value = "${recipe.timesUsed}×")
+                StatChip(
+                    label = "Used",
+                    value = "${recipe.timesUsed}×",
+                    modifier = Modifier.weight(1f)
+                )
             }
             
-            recipe.description?.let {
-                if (it.isNotBlank()) {
+            // Description
+            recipe.description?.let { description ->
+                if (description.isNotBlank()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = it,
+                        text = description,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -225,7 +261,7 @@ fun RecipeLibraryCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Action buttons
             Row(
@@ -245,21 +281,8 @@ fun RecipeLibraryCard(
                     Text("Edit")
                 }
                 
-                OutlinedButton(
-                    onClick = onDuplicate,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        Icons.Default.ContentCopy, 
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Copy")
-                }
-                
                 Button(
-                    onClick = { /* TODO: Create project from recipe */ },
+                    onClick = onCreateProject,
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
@@ -271,7 +294,67 @@ fun RecipeLibraryCard(
                     Text("Brew")
                 }
             }
+            
+            // Additional actions row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(
+                    onClick = onDuplicate,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.ContentCopy, 
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Duplicate")
+                }
+                
+                TextButton(
+                    onClick = { /* TODO: Share recipe */ },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.Share, 
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Share")
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun DifficultyBadge(
+    difficulty: RecipeDifficulty,
+    modifier: Modifier = Modifier
+) {
+    val (color, text) = when (difficulty) {
+        RecipeDifficulty.BEGINNER -> Color(0xFF4CAF50) to "Beginner"
+        RecipeDifficulty.INTERMEDIATE -> Color(0xFFFF9800) to "Intermediate"
+        RecipeDifficulty.ADVANCED -> Color(0xFFF44336) to "Advanced"
+    }
+    
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }
 
@@ -286,22 +369,22 @@ fun StatChip(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "$label: ",
+                text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
