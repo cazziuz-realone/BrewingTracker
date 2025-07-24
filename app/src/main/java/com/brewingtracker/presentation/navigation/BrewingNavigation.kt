@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.brewingtracker.presentation.screens.*
+import com.brewingtracker.presentation.screens.recipe.RecipeBuilderScreen
 
 @Composable
 fun BrewingNavigation(
@@ -24,7 +25,7 @@ fun BrewingNavigation(
         startDestination = Screen.Dashboard.route,
         modifier = modifier
     ) {
-        // Dashboard/Home Screen - FIXED: Removed try-catch around composable
+        // Dashboard/Home Screen
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onNavigateToProjects = {
@@ -38,6 +39,10 @@ fun BrewingNavigation(
                 },
                 onNavigateToProjectDetail = { projectId ->
                     navController.navigate(Screen.ProjectDetail.createRoute(projectId))
+                },
+                // NEW: Recipe Builder navigation
+                onNavigateToRecipeBuilder = {
+                    navController.navigate(Screen.RecipeBuilder.route)
                 }
             )
         }
@@ -166,6 +171,63 @@ fun BrewingNavigation(
                         }
                     )
                 }
+            }
+        }
+
+        // NEW: Recipe Builder Screens
+        composable(Screen.RecipeBuilder.route) {
+            RecipeBuilderScreen(
+                recipeId = null, // New recipe
+                navController = navController
+            )
+        }
+
+        composable(
+            route = Screen.RecipeBuilderEdit.route,
+            arguments = listOf(
+                navArgument("recipeId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString("recipeId")
+            RecipeBuilderScreen(
+                recipeId = recipeId,
+                navController = navController
+            )
+        }
+
+        composable(Screen.RecipeLibrary.route) {
+            // Placeholder for Recipe Library - can be implemented later
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Recipe Library\n(Coming Soon)",
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        composable(
+            route = Screen.RecipeDetail.route,
+            arguments = listOf(
+                navArgument("recipeId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+            // Placeholder for Recipe Detail - can be implemented later
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Recipe Detail\nRecipe ID: $recipeId\n(Coming Soon)",
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
