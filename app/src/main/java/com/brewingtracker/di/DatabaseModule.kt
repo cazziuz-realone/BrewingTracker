@@ -40,4 +40,15 @@ object DatabaseModule {
     fun provideProjectIngredientDao(database: BrewingDatabase): ProjectIngredientDao {
         return database.projectIngredientDao()
     }
+
+    // NEW: Recipe Builder DAOs - FIXED MISSING DEPENDENCY INJECTION
+    @Provides
+    fun provideRecipeDao(database: BrewingDatabase): RecipeDao {
+        return database.recipeDao()
+    }
+
+    @Provides
+    fun provideRecipeIngredientDao(database: BrewingDatabase): RecipeIngredientDao {
+        return database.recipeIngredientDao()
+    }
 }
