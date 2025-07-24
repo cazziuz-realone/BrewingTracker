@@ -19,8 +19,7 @@ class RecipeBuilderViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecipeBuilderUiState())
     val uiState: StateFlow<RecipeBuilderUiState> = _uiState.asStateFlow()
     
-    init {
-        // Set up search flow
+    init {\n        // Set up search flow
         _uiState
             .map { it.selectedCategory to it.searchQuery }
             .distinctUntilChanged()
@@ -126,21 +125,49 @@ class RecipeBuilderViewModel @Inject constructor(
         }
     }
     
+    // FIXED: Ensure recipe is saved before adding ingredients
     fun addIngredient(ingredient: Ingredient) {
         viewModelScope.launch {
-            // Show add ingredient dialog - for now just add with default values
-            val recipeIngredient = RecipeIngredient(
-                recipeId = _uiState.value.recipe.id,
-                ingredientId = ingredient.id,
-                baseQuantity = 1.0, // Default quantity
-                baseUnit = ingredient.unit,
-                additionTiming = "primary" // Default timing
-            )
-            
             try {
+                // First, ensure the recipe is saved to the database
+                val currentRecipe = _uiState.value.recipe
+                if (currentRecipe.name.isBlank()) {
+                    _uiState.value = _uiState.value.copy(
+                        validation = _uiState.value.validation + "Please enter a recipe name before adding ingredients"
+                    )
+                    return@launch
+                }
+                
+                // Save or update the recipe first
+                val savedRecipe = if (_uiState.value.isEditing) {
+                    recipeDao.updateRecipe(currentRecipe)
+                    currentRecipe
+                } else {
+                    recipeDao.insertRecipe(currentRecipe)
+                    // Update state to mark as editing (saved)
+                    _uiState.value = _uiState.value.copy(isEditing = true)
+                    currentRecipe
+                }
+                
+                // Now add the ingredient to the saved recipe
+                val recipeIngredient = RecipeIngredient(
+                    recipeId = savedRecipe.id,
+                    ingredientId = ingredient.id,
+                    baseQuantity = 1.0, // Default quantity
+                    baseUnit = ingredient.unit,
+                    additionTiming = "primary" // Default timing
+                )
+                
                 recipeIngredientDao.insertRecipeIngredient(recipeIngredient)
-                // Reload recipe ingredients
-                loadRecipeIngredients(_uiState.value.recipe.id)
+                
+                // Reload recipe ingredients to update UI
+                loadRecipeIngredients(savedRecipe.id)
+                
+                // Clear any validation errors
+                _uiState.value = _uiState.value.copy(
+                    validation = emptyList()
+                )
+                
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     validation = _uiState.value.validation + "Error adding ingredient: ${e.message}"
@@ -240,10 +267,16 @@ class RecipeBuilderViewModel @Inject constructor(
                     return@launch
                 }
                 
-                recipeDao.insertRecipe(recipe)
+                if (_uiState.value.isEditing) {
+                    recipeDao.updateRecipe(recipe)
+                } else {
+                    recipeDao.insertRecipe(recipe)
+                    _uiState.value = _uiState.value.copy(isEditing = true)
+                }
                 
                 _uiState.value = _uiState.value.copy(
-                    saveResult = Result.success(Unit)
+                    saveResult = Result.success(Unit),
+                    validation = emptyList()
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -262,6 +295,11 @@ class RecipeBuilderViewModel @Inject constructor(
     
     fun clearSaveResult() {
         _uiState.value = _uiState.value.copy(saveResult = null)
+    }
+    
+    // Clear validation errors
+    fun clearValidation() {
+        _uiState.value = _uiState.value.copy(validation = emptyList())
     }
 }
 
