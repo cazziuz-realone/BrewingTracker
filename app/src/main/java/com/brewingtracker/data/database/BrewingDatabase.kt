@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
         Recipe::class,           // ← ADDED for recipe builder
         RecipeIngredient::class  // ← ADDED for recipe builder
     ],
-    version = 7,  // Incremented from 6 to 7 for recipe builder system
+    version = 8,  // INCREMENTED to force database recreation
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -61,21 +61,28 @@ abstract class BrewingDatabase : RoomDatabase() {
             super.onCreate(db)
             INSTANCE?.let { database ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    // Seed the database with initial data
+                    // ALWAYS populate on create
                     populateDatabase(database)
                 }
             }
         }
         
-        // Also populate on open to ensure data exists
+        // ALWAYS populate on open to ensure data exists
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
             INSTANCE?.let { database ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    // Check if ingredients exist, if not populate
                     val ingredientDao = database.ingredientDao()
                     val count = ingredientDao.getIngredientCount()
-                    if (count == 0) {
+                    // ALWAYS repopulate if less than 100 ingredients
+                    if (count < 100) {
+                        // Clear existing data first
+                        try {
+                            db.execSQL("DELETE FROM ingredients")
+                            db.execSQL("DELETE FROM yeasts") 
+                        } catch (e: Exception) {
+                            // Ignore errors during cleanup
+                        }
                         populateDatabase(database)
                     }
                 }
@@ -84,9 +91,8 @@ abstract class BrewingDatabase : RoomDatabase() {
     }
 }
 
-// EXPANDED: Comprehensive ingredient database with 150+ ingredients for mead, wine, beer, and cider
+// COMPREHENSIVE INGREDIENT DATABASE - GUARANTEED 150+ ingredients
 private suspend fun populateDatabase(database: BrewingDatabase) {
-    val projectDao = database.projectDao()
     val ingredientDao = database.ingredientDao()
     val yeastDao = database.yeastDao()
     
@@ -123,7 +129,7 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
         Ingredient(22, "Blackberries", IngredientType.FRUIT, "Berry", "Rich, complex berry character for melomel", "mead,wine,beer", null, null, null, null, 1.5, "lbs"),
         Ingredient(23, "Blueberries", IngredientType.FRUIT, "Berry", "Sweet-tart berries, purple color", "mead,wine,beer", null, null, null, null, 3.0, "lbs"),
         Ingredient(24, "Raspberries", IngredientType.FRUIT, "Berry", "Intense berry flavor and aroma", "mead,wine,beer", null, null, null, null, 1.0, "lbs"),
-        Ingredient(25, "Sweet Cherries", IngredientType.FRUIT, "Stone Fruit", "Rich, sweet fruit character for classic melomel", "mead,wine,beer", null, null, null, null, 0.0, "lbs"),
+        Ingredient(25, "Sweet Cherries", IngredientType.FRUIT, "Stone Fruit", "Rich, sweet fruit character for classic melomel", "mead,wine,beer", null, null, null, null, 2.0, "lbs"),
         Ingredient(26, "Tart Cherries", IngredientType.FRUIT, "Stone Fruit", "Sour cherry complexity", "mead,wine,beer", null, null, null, null, 2.0, "lbs"),
         Ingredient(27, "Peaches", IngredientType.FRUIT, "Stone Fruit", "Delicate stone fruit character", "mead,wine", null, null, null, null, 1.5, "lbs"),
         Ingredient(28, "Apricots", IngredientType.FRUIT, "Stone Fruit", "Sweet, floral stone fruit", "mead,wine", null, null, null, null, 1.0, "lbs"),
@@ -137,9 +143,9 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
         Ingredient(34, "Grapefruit Zest", IngredientType.FRUIT, "Citrus", "Bitter citrus complexity", "mead,beer", null, null, null, null, 0.3, "oz"),
         
         // === SPICES FOR METHEGLIN (EXPANDED) ===
-        Ingredient(35, "Ceylon Cinnamon", IngredientType.SPICE, "Warming", "True cinnamon, delicate and sweet for metheglin", "mead,beer,wine", null, null, null, null, 0.0, "oz"),
-        Ingredient(36, "Madagascar Vanilla Beans", IngredientType.SPICE, "Sweet", "Premium vanilla, split and scrape for best results", "mead,beer", null, null, null, null, 0.0, "each"),
-        Ingredient(37, "Cardamom Pods", IngredientType.SPICE, "Warming", "Aromatic, slightly citrusy spice", "mead,beer", null, null, null, null, 0.0, "oz"),
+        Ingredient(35, "Ceylon Cinnamon", IngredientType.SPICE, "Warming", "True cinnamon, delicate and sweet for metheglin", "mead,beer,wine", null, null, null, null, 0.5, "oz"),
+        Ingredient(36, "Madagascar Vanilla Beans", IngredientType.SPICE, "Sweet", "Premium vanilla, split and scrape for best results", "mead,beer", null, null, null, null, 2.0, "each"),
+        Ingredient(37, "Cardamom Pods", IngredientType.SPICE, "Warming", "Aromatic, slightly citrusy spice", "mead,beer", null, null, null, null, 0.3, "oz"),
         Ingredient(38, "Star Anise", IngredientType.SPICE, "Warming", "Licorice-like spice for winter meads", "mead,beer", null, null, null, null, 0.2, "oz"),
         Ingredient(39, "Cloves", IngredientType.SPICE, "Warming", "Intense warming spice, use sparingly", "mead,beer", null, null, null, null, 0.1, "oz"),
         Ingredient(40, "Allspice Berries", IngredientType.SPICE, "Warming", "Complex warming spice", "mead,beer", null, null, null, null, 0.3, "oz"),
@@ -224,6 +230,7 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
         Ingredient(99, "Coconut Flakes", IngredientType.FRUIT, "Tropical", "Toasted coconut character", "mead,beer", null, null, null, null, 0.5, "lbs"),
         Ingredient(100, "Banana", IngredientType.FRUIT, "Tropical", "Tropical fruit character", "mead,beer", null, null, null, null, 2.0, "lbs"),
         
+        // Continue adding more ingredients to reach 150+...
         // === ADDITIONAL SPICES & HERBS ===
         Ingredient(101, "Juniper Berries", IngredientType.SPICE, "Gin", "Gin-like botanical", "mead,beer", null, null, null, null, 0.2, "oz"),
         Ingredient(102, "Angelica Root", IngredientType.SPICE, "Botanical", "Traditional European herb", "mead", null, null, null, null, 0.1, "oz"),
@@ -291,11 +298,21 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
         Ingredient(150, "Fig", IngredientType.FRUIT, "Mediterranean", "Sweet, complex fruit", "mead,wine", null, null, null, null, 1.5, "lbs")
     )
     
-    // Insert all ingredients
+    // Insert all ingredients with error handling
     try {
         ingredientDao.insertIngredients(ingredients)
+        println("Successfully inserted ${ingredients.size} ingredients")
     } catch (e: Exception) {
+        println("Error inserting ingredients: ${e.message}")
         e.printStackTrace()
+        // Try inserting one by one if batch fails
+        ingredients.forEach { ingredient ->
+            try {
+                ingredientDao.insertIngredient(ingredient)
+            } catch (ex: Exception) {
+                println("Failed to insert ingredient: ${ingredient.name}")
+            }
+        }
     }
     
     // Enhanced yeast database
@@ -309,7 +326,9 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
     
     try {
         yeastDao.insertYeasts(yeasts)
+        println("Successfully inserted ${yeasts.size} yeasts")
     } catch (e: Exception) {
+        println("Error inserting yeasts: ${e.message}")
         e.printStackTrace()
     }
 }
