@@ -15,11 +15,11 @@ interface RecipeIngredientDao {
     
     @Transaction
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
-    fun getRecipeIngredientsWithDetails(recipeId: String): Flow<Map<RecipeIngredient, Ingredient>>
+    fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>>
     
     @Transaction
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId AND additionTiming = :timing ORDER BY createdAt")
-    fun getRecipeIngredientsByTiming(recipeId: String, timing: String): Flow<Map<RecipeIngredient, Ingredient>>
+    fun getRecipeIngredientsByTiming(recipeId: String, timing: String): Flow<List<RecipeIngredientWithDetails>>
     
     @Query("SELECT * FROM recipe_ingredients WHERE id = :ingredientId")
     suspend fun getRecipeIngredientById(ingredientId: Int): RecipeIngredient?
@@ -62,7 +62,7 @@ interface RecipeIngredientDao {
     """)
     suspend fun getInventoryCheckData(recipeId: String): List<InventoryCheckResult>
     
-    // Duplicate recipe ingredients for recipe copying (FIXED: removed @Insert annotation)
+    // Duplicate recipe ingredients for recipe copying
     suspend fun duplicateRecipeIngredients(
         sourceRecipeId: String, 
         newRecipeId: String
