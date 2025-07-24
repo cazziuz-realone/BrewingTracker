@@ -19,7 +19,8 @@ class RecipeBuilderViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecipeBuilderUiState())
     val uiState: StateFlow<RecipeBuilderUiState> = _uiState.asStateFlow()
     
-    init {\n        // Set up search flow
+    init {
+        // Set up search flow
         _uiState
             .map { it.selectedCategory to it.searchQuery }
             .distinctUntilChanged()
@@ -59,19 +60,15 @@ class RecipeBuilderViewModel @Inject constructor(
     
     private suspend fun loadRecipeIngredients(recipeId: String) {
         try {
-            // Note: This will need to be adapted based on your actual Room relationship setup
-            // For now, we'll use a simpler approach
-            val recipeIngredients = recipeIngredientDao.getRecipeIngredients(recipeId)
-            
-            // Convert to RecipeIngredientWithDetails - you'll need to implement this join
-            // This is a placeholder - implement proper join query in your DAO
-            val ingredientsWithDetails = emptyList<RecipeIngredientWithDetails>()
-            
-            _uiState.value = _uiState.value.copy(
-                recipeIngredients = ingredientsWithDetails
-            )
-            calculateRecipe()
-            checkInventoryStatus()
+            // Use the proper Flow-based method for getting ingredients with details
+            recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
+                .collect { ingredientsWithDetails ->
+                    _uiState.value = _uiState.value.copy(
+                        recipeIngredients = ingredientsWithDetails
+                    )
+                    calculateRecipe()
+                    checkInventoryStatus()
+                }
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(
                 validation = _uiState.value.validation + "Error loading ingredients: ${e.message}"
@@ -125,53 +122,79 @@ class RecipeBuilderViewModel @Inject constructor(
         }
     }
     
-    // FIXED: Ensure recipe is saved before adding ingredients
+    // FIXED: Completely rewritten to prevent foreign key constraint errors
     fun addIngredient(ingredient: Ingredient) {
         viewModelScope.launch {
             try {
-                // First, ensure the recipe is saved to the database
                 val currentRecipe = _uiState.value.recipe
+                
+                // Validate recipe name first
                 if (currentRecipe.name.isBlank()) {
                     _uiState.value = _uiState.value.copy(
-                        validation = _uiState.value.validation + "Please enter a recipe name before adding ingredients"
+                        validation = listOf("Please enter a recipe name before adding ingredients")
                     )
                     return@launch
                 }
                 
-                // Save or update the recipe first
-                val savedRecipe = if (_uiState.value.isEditing) {
+                // CRITICAL FIX: Always ensure recipe exists in database first
+                val savedRecipeId = if (_uiState.value.isEditing) {
+                    // Recipe already exists, just update it
                     recipeDao.updateRecipe(currentRecipe)
-                    currentRecipe
+                    currentRecipe.id
                 } else {
-                    recipeDao.insertRecipe(currentRecipe)
-                    // Update state to mark as editing (saved)
-                    _uiState.value = _uiState.value.copy(isEditing = true)
-                    currentRecipe
+                    // NEW RECIPE: Must insert recipe first before adding ingredients
+                    try {
+                        recipeDao.insertRecipe(currentRecipe)
+                        // Mark as editing now that it's saved
+                        _uiState.value = _uiState.value.copy(isEditing = true)
+                        currentRecipe.id
+                    } catch (e: Exception) {
+                        // If insert fails, the recipe might already exist, try to get it
+                        val existingRecipe = recipeDao.getRecipeById(currentRecipe.id)
+                        if (existingRecipe != null) {
+                            _uiState.value = _uiState.value.copy(isEditing = true)
+                            existingRecipe.id
+                        } else {
+                            throw e
+                        }
+                    }
                 }
                 
-                // Now add the ingredient to the saved recipe
+                // Now safely add the ingredient to the saved recipe
                 val recipeIngredient = RecipeIngredient(
-                    recipeId = savedRecipe.id,
+                    recipeId = savedRecipeId,
                     ingredientId = ingredient.id,
                     baseQuantity = 1.0, // Default quantity
                     baseUnit = ingredient.unit,
                     additionTiming = "primary" // Default timing
                 )
                 
+                // Insert the recipe ingredient
                 recipeIngredientDao.insertRecipeIngredient(recipeIngredient)
                 
                 // Reload recipe ingredients to update UI
-                loadRecipeIngredients(savedRecipe.id)
+                loadRecipeIngredients(savedRecipeId)
                 
-                // Clear any validation errors
-                _uiState.value = _uiState.value.copy(
-                    validation = emptyList()
-                )
+                // Clear validation errors on success
+                _uiState.value = _uiState.value.copy(validation = emptyList())
                 
             } catch (e: Exception) {
+                // Better error handling with more specific messages
+                val errorMessage = when {
+                    e.message?.contains("FOREIGN KEY") == true -> 
+                        "Database error: Recipe must be saved first. Please try again."
+                    e.message?.contains("UNIQUE constraint") == true ->
+                        "This ingredient is already in the recipe."
+                    else -> "Error adding ingredient: ${e.message}"
+                }
+                
                 _uiState.value = _uiState.value.copy(
-                    validation = _uiState.value.validation + "Error adding ingredient: ${e.message}"
+                    validation = listOf(errorMessage)
                 )
+                
+                // Log the full error for debugging
+                println("RecipeBuilderViewModel: Error adding ingredient ${ingredient.name}: ${e.message}")
+                e.printStackTrace()
             }
         }
     }
@@ -181,7 +204,9 @@ class RecipeBuilderViewModel @Inject constructor(
             try {
                 recipeIngredientDao.deleteRecipeIngredientById(ingredientId)
                 // Reload recipe ingredients
-                loadRecipeIngredients(_uiState.value.recipe.id)
+                if (_uiState.value.isEditing) {
+                    loadRecipeIngredients(_uiState.value.recipe.id)
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     validation = _uiState.value.validation + "Error removing ingredient: ${e.message}"
@@ -190,36 +215,87 @@ class RecipeBuilderViewModel @Inject constructor(
         }
     }
     
+    fun updateIngredient(updatedIngredient: RecipeIngredient) {
+        viewModelScope.launch {
+            try {
+                recipeIngredientDao.updateRecipeIngredient(updatedIngredient)
+                // Reload recipe ingredients
+                if (_uiState.value.isEditing) {
+                    loadRecipeIngredients(_uiState.value.recipe.id)
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    validation = _uiState.value.validation + "Error updating ingredient: ${e.message}"
+                )
+            }
+        }
+    }
+    
     private fun calculateRecipe() {
+        // Only calculate if we have ingredients
+        val ingredients = _uiState.value.recipeIngredients
+        if (ingredients.isEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                calculations = null,
+                isCalculating = false
+            )
+            return
+        }
+        
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isCalculating = true)
             
             try {
-                val ingredients = _uiState.value.recipeIngredients
+                // Basic calculation (you'll want to make this more sophisticated)
+                // Calculate based on ingredient types and quantities
+                var totalGravityPoints = 0.0
+                val batchSize = _uiState.value.selectedBatchSize
                 
-                if (ingredients.isNotEmpty()) {
-                    // Basic calculation (you'll want to make this more sophisticated)
-                    // This is a placeholder - implement proper gravity/ABV calculations
-                    val estimatedOG = 1.000 + (ingredients.size * 0.010) // Placeholder
-                    val estimatedFG = estimatedOG - 0.020 // Placeholder
-                    val estimatedABV = (estimatedOG - estimatedFG) * 131.25
+                ingredients.forEach { ingredientWithDetails ->
+                    val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
+                    val ingredient = ingredientWithDetails.ingredient
                     
-                    val calculations = RecipeCalculations(
-                        estimatedOG = estimatedOG,
-                        estimatedFG = estimatedFG,
-                        estimatedABV = estimatedABV
-                    )
-                    
-                    _uiState.value = _uiState.value.copy(
-                        calculations = calculations,
-                        isCalculating = false
-                    )
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        calculations = null,
-                        isCalculating = false
-                    )
+                    when (ingredient.type) {
+                        IngredientType.GRAIN -> {
+                            // Use PPG if available, otherwise estimate based on color
+                            val ppg = ingredient.ppgExtract ?: (35.0 - (ingredient.colorLovibond ?: 0.0) * 0.1)
+                            totalGravityPoints += (scaledQuantity * ppg * 0.75) // 75% brewhouse efficiency
+                        }
+                        IngredientType.FRUIT -> {
+                            // Honey and fruit sugars - rough estimate
+                            val sugarContent = when {
+                                ingredient.name.contains("honey", ignoreCase = true) -> 0.75
+                                ingredient.name.contains("juice", ignoreCase = true) -> 0.15
+                                else -> 0.12 // Default fruit sugar content
+                            }
+                            totalGravityPoints += scaledQuantity * sugarContent * 46.0
+                        }
+                        IngredientType.ADJUNCT -> {
+                            // Sugars and adjuncts
+                            val ppg = ingredient.ppgExtract ?: 46.0 // Default for sugars
+                            totalGravityPoints += scaledQuantity * ppg
+                        }
+                        else -> {
+                            // Other ingredients don't contribute significantly to gravity
+                        }
+                    }
                 }
+                
+                // Calculate gravity for 1 gallon base
+                val estimatedOG = 1.000 + (totalGravityPoints / 1000.0)
+                val estimatedFG = estimatedOG - ((estimatedOG - 1.0) * 0.75) // Assuming 75% attenuation
+                val estimatedABV = (estimatedOG - estimatedFG) * 131.25
+                
+                val calculations = RecipeCalculations(
+                    estimatedOG = estimatedOG,
+                    estimatedFG = estimatedFG,
+                    estimatedABV = estimatedABV
+                )
+                
+                _uiState.value = _uiState.value.copy(
+                    calculations = calculations,
+                    isCalculating = false
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     calculations = null,
@@ -252,6 +328,7 @@ class RecipeBuilderViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(inventoryStatus = inventoryStatus)
             } catch (e: Exception) {
                 // Handle error silently for inventory checking
+                println("RecipeBuilderViewModel: Inventory check error: ${e.message}")
             }
         }
     }
@@ -288,8 +365,22 @@ class RecipeBuilderViewModel @Inject constructor(
     
     fun createProjectFromRecipe() {
         viewModelScope.launch {
-            // TODO: Implement project creation from recipe
-            // This would create a new Project entity based on the current recipe
+            try {
+                // Ensure recipe is saved first
+                if (!_uiState.value.isEditing) {
+                    saveRecipe()
+                }
+                
+                // TODO: Implement project creation from recipe
+                // This would create a new Project entity based on the current recipe
+                _uiState.value = _uiState.value.copy(
+                    validation = listOf("Project creation from recipe - feature coming soon!")
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    validation = _uiState.value.validation + "Error creating project: ${e.message}"
+                )
+            }
         }
     }
     
