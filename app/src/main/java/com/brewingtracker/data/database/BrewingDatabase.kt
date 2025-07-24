@@ -18,10 +18,10 @@ import kotlinx.coroutines.launch
         Ingredient::class,
         Yeast::class,
         ProjectIngredient::class,
-        Recipe::class,           // ← ADDED for recipe builder
-        RecipeIngredient::class  // ← ADDED for recipe builder
+        Recipe::class,           // ← Recipe builder entities
+        RecipeIngredient::class  // ← Recipe builder entities
     ],
-    version = 8,  // INCREMENTED to force database recreation
+    version = 9,  // INCREMENTED to force database recreation and fix ingredient population
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -31,8 +31,8 @@ abstract class BrewingDatabase : RoomDatabase() {
     abstract fun ingredientDao(): IngredientDao
     abstract fun yeastDao(): YeastDao
     abstract fun projectIngredientDao(): ProjectIngredientDao
-    abstract fun recipeDao(): RecipeDao                    // ← ADDED for recipe builder
-    abstract fun recipeIngredientDao(): RecipeIngredientDao // ← ADDED for recipe builder
+    abstract fun recipeDao(): RecipeDao                    // ← Recipe builder DAOs
+    abstract fun recipeIngredientDao(): RecipeIngredientDao // ← Recipe builder DAOs
 
     companion object {
         @Volatile
@@ -67,23 +67,26 @@ abstract class BrewingDatabase : RoomDatabase() {
             }
         }
         
-        // ALWAYS populate on open to ensure data exists
+        // FIXED: Always populate on open to ensure 150+ ingredients exist
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
             INSTANCE?.let { database ->
                 CoroutineScope(Dispatchers.IO).launch {
                     val ingredientDao = database.ingredientDao()
                     val count = ingredientDao.getIngredientCount()
-                    // ALWAYS repopulate if less than 100 ingredients
-                    if (count < 100) {
+                    // FIXED: Changed from 100 to 150 to match our target ingredient count
+                    if (count < 150) {
+                        println("BrewingDatabase: Found only $count ingredients, repopulating with 150+...")
                         // Clear existing data first
                         try {
-                            db.execSQL("DELETE FROM ingredients")
-                            db.execSQL("DELETE FROM yeasts") 
+                            db.execSQL("DELETE FROM ingredients WHERE 1=1")
+                            db.execSQL("DELETE FROM yeasts WHERE 1=1") 
                         } catch (e: Exception) {
-                            // Ignore errors during cleanup
+                            println("Database cleanup error (expected): ${e.message}")
                         }
                         populateDatabase(database)
+                    } else {
+                        println("BrewingDatabase: Found $count ingredients - database properly populated")
                     }
                 }
             }
@@ -95,6 +98,8 @@ abstract class BrewingDatabase : RoomDatabase() {
 private suspend fun populateDatabase(database: BrewingDatabase) {
     val ingredientDao = database.ingredientDao()
     val yeastDao = database.yeastDao()
+    
+    println("BrewingDatabase: Starting ingredient population...")
     
     // COMPREHENSIVE INGREDIENT DATABASE - 150+ Brewing Ingredients
     val ingredients = listOf(
@@ -298,21 +303,31 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
         Ingredient(150, "Fig", IngredientType.FRUIT, "Mediterranean", "Sweet, complex fruit", "mead,wine", null, null, null, null, 1.5, "lbs")
     )
     
-    // Insert all ingredients with error handling
+    // Insert all ingredients with enhanced error handling
     try {
+        println("BrewingDatabase: Attempting to insert ${ingredients.size} ingredients...")
         ingredientDao.insertIngredients(ingredients)
-        println("Successfully inserted ${ingredients.size} ingredients")
+        println("BrewingDatabase: ✅ Successfully inserted ${ingredients.size} ingredients!")
+        
+        // Verify insertion
+        val finalCount = ingredientDao.getIngredientCount()
+        println("BrewingDatabase: Final ingredient count: $finalCount")
     } catch (e: Exception) {
-        println("Error inserting ingredients: ${e.message}")
+        println("BrewingDatabase: ❌ Error inserting ingredients in batch: ${e.message}")
         e.printStackTrace()
+        
         // Try inserting one by one if batch fails
+        println("BrewingDatabase: Attempting individual ingredient insertion...")
+        var successCount = 0
         ingredients.forEach { ingredient ->
             try {
                 ingredientDao.insertIngredient(ingredient)
+                successCount++
             } catch (ex: Exception) {
-                println("Failed to insert ingredient: ${ingredient.name}")
+                println("BrewingDatabase: Failed to insert ingredient: ${ingredient.name} - ${ex.message}")
             }
         }
+        println("BrewingDatabase: Successfully inserted $successCount out of ${ingredients.size} ingredients individually")
     }
     
     // Enhanced yeast database
@@ -326,9 +341,11 @@ private suspend fun populateDatabase(database: BrewingDatabase) {
     
     try {
         yeastDao.insertYeasts(yeasts)
-        println("Successfully inserted ${yeasts.size} yeasts")
+        println("BrewingDatabase: ✅ Successfully inserted ${yeasts.size} yeasts")
     } catch (e: Exception) {
-        println("Error inserting yeasts: ${e.message}")
+        println("BrewingDatabase: ❌ Error inserting yeasts: ${e.message}")
         e.printStackTrace()
     }
+    
+    println("BrewingDatabase: Database population complete!")
 }
