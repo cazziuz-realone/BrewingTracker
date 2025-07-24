@@ -18,6 +18,10 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes WHERE beverageType = :beverageType ORDER BY name ASC")
     fun getRecipesByType(beverageType: BeverageType): Flow<List<Recipe>>
     
+    // ADDED: Method needed by RecipeLibraryViewModel
+    @Query("SELECT * FROM recipes WHERE beverageType = :beverageType ORDER BY updatedAt DESC")
+    fun getRecipesByBeverageType(beverageType: BeverageType): Flow<List<Recipe>>
+    
     @Query("SELECT * FROM recipes WHERE difficulty = :difficulty ORDER BY name ASC")
     fun getRecipesByDifficulty(difficulty: RecipeDifficulty): Flow<List<Recipe>>
     
@@ -32,6 +36,16 @@ interface RecipeDao {
         ORDER BY name ASC
     """)
     fun searchRecipes(searchQuery: String): Flow<List<Recipe>>
+    
+    // ADDED: Method needed by RecipeLibraryViewModel
+    @Query("""
+        SELECT * FROM recipes 
+        WHERE name LIKE '%' || :query || '%' 
+        OR description LIKE '%' || :query || '%'
+        OR style LIKE '%' || :query || '%'
+        ORDER BY updatedAt DESC
+    """)
+    fun searchRecipesByName(query: String): Flow<List<Recipe>>
     
     @Query("""
         SELECT * FROM recipes 
