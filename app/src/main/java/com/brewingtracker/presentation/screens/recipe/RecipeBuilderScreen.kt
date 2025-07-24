@@ -386,10 +386,3 @@ fun ValidationCard(
         }
     }
 }
-
-// Data class for calculations
-data class RecipeCalculations(
-    val estimatedOG: Double,
-    val estimatedFG: Double,
-    val estimatedABV: Double
-)
