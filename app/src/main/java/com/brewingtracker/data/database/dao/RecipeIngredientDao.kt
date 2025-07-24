@@ -13,6 +13,10 @@ interface RecipeIngredientDao {
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     suspend fun getRecipeIngredients(recipeId: String): List<RecipeIngredient>
     
+    // ADDED: Synchronous version needed by RecipeLibraryViewModel for duplication
+    @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
+    suspend fun getRecipeIngredientsSync(recipeId: String): List<RecipeIngredient>
+    
     @Transaction
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>>
@@ -41,6 +45,10 @@ interface RecipeIngredientDao {
     
     @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
     suspend fun deleteAllRecipeIngredients(recipeId: String)
+    
+    // ADDED: Method needed by RecipeLibraryViewModel for recipe deletion
+    @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
+    suspend fun deleteRecipeIngredientsByRecipeId(recipeId: String)
     
     @Query("SELECT COUNT(*) FROM recipe_ingredients WHERE recipeId = :recipeId")
     suspend fun getRecipeIngredientCount(recipeId: String): Int
