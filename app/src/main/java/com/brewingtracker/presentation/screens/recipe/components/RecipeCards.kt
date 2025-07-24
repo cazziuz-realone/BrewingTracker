@@ -251,6 +251,9 @@ fun SelectedIngredientsCard(
     onIngredientRemove: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // State for edit dialog
+    var editingIngredient by remember { mutableStateOf<RecipeIngredientWithDetails?>(null) }
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -361,7 +364,7 @@ fun SelectedIngredientsCard(
                                 ?: InventoryStatus.UNKNOWN,
                             batchSize = batchSize,
                             onEdit = { 
-                                onIngredientEdit(ingredientWithDetails.recipeIngredient)
+                                editingIngredient = ingredientWithDetails
                             },
                             onRemove = { 
                                 onIngredientRemove(ingredientWithDetails.recipeIngredient.id) 
@@ -373,5 +376,18 @@ fun SelectedIngredientsCard(
                 }
             }
         }
+    }
+    
+    // Show edit dialog if ingredient is being edited
+    editingIngredient?.let { ingredient ->
+        EditIngredientDialog(
+            ingredientWithDetails = ingredient,
+            batchSize = batchSize,
+            onDismiss = { editingIngredient = null },
+            onSave = { updatedIngredient ->
+                onIngredientEdit(updatedIngredient)
+                editingIngredient = null
+            }
+        )
     }
 }
