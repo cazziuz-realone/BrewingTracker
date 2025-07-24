@@ -1,6 +1,7 @@
 package com.brewingtracker.presentation.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -31,6 +32,7 @@ fun DashboardScreen(
     onNavigateToCalculators: () -> Unit,
     onNavigateToIngredients: () -> Unit = {},
     onNavigateToProjectDetail: (String) -> Unit = {},
+    onNavigateToRecipeBuilder: () -> Unit = {}, // NEW: Recipe Builder navigation
     projectsViewModel: ProjectsViewModel = hiltViewModel(),
     ingredientsViewModel: IngredientsViewModel = hiltViewModel()
 ) {
@@ -38,155 +40,192 @@ fun DashboardScreen(
     val favoriteProjects by projectsViewModel.favoriteProjects.collectAsStateWithLifecycle()
     val inStockIngredients by ingredientsViewModel.inStockIngredients.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    // FIXED: Use LazyColumn with proper padding to fix scrolling issues
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Brewing Dashboard",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 20.dp)
-        )
+        // Header
+        item {
+            Text(
+                text = "Brewing Dashboard",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-        // Overview Stats - More compact
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 20.dp)
-        ) {
-            item {
-                StatCard(
-                    title = "Active Projects",
-                    value = activeProjects.size.toString(),
-                    icon = Icons.Default.Assignment,
-                    onClick = onNavigateToProjects
-                )
-            }
-            item {
-                StatCard(
-                    title = "Favorite Projects",
-                    value = favoriteProjects.size.toString(),
-                    icon = Icons.Default.Favorite,
-                    onClick = onNavigateToProjects
-                )
-            }
-            item {
-                StatCard(
-                    title = "In Stock",
-                    value = inStockIngredients.size.toString(),
-                    icon = Icons.Default.Inventory,
-                    onClick = onNavigateToIngredients  // FIXED: Added navigation
-                )
+        // Overview Stats
+        item {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    StatCard(
+                        title = "Active Projects",
+                        value = activeProjects.size.toString(),
+                        icon = Icons.Default.Assignment,
+                        onClick = onNavigateToProjects
+                    )
+                }
+                item {
+                    StatCard(
+                        title = "Favorite Projects",
+                        value = favoriteProjects.size.toString(),
+                        icon = Icons.Default.Favorite,
+                        onClick = onNavigateToProjects
+                    )
+                }
+                item {
+                    StatCard(
+                        title = "In Stock",
+                        value = inStockIngredients.size.toString(),
+                        icon = Icons.Default.Inventory,
+                        onClick = onNavigateToIngredients
+                    )
+                }
             }
         }
 
         // Recent Projects Section
         if (activeProjects.isNotEmpty()) {
-            Text(
-                text = "Recent Projects",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            item {
+                Text(
+                    text = "Recent Projects",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 20.dp)
-            ) {
-                items(activeProjects.take(3)) { project ->
-                    RecentProjectCard(
-                        project = project,
-                        onClick = { onNavigateToProjectDetail(project.id) }  // FIXED: Added navigation
-                    )
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(activeProjects.take(3)) { project ->
+                        RecentProjectCard(
+                            project = project,
+                            onClick = { onNavigateToProjectDetail(project.id) }
+                        )
+                    }
                 }
             }
         }
 
         // Quick Actions Section
-        Text(
-            text = "Quick Actions",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            QuickActionCard(
-                title = "New Project",
-                subtitle = "Start brewing",
-                icon = Icons.Default.Add,
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToProjects
-            )
-
-            QuickActionCard(
-                title = "Calculators",
-                subtitle = "ABV, IBU, SRM",
-                icon = Icons.Default.Calculate,
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToCalculators
+        item {
+            Text(
+                text = "Quick Actions",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // First row of quick actions
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                QuickActionCard(
+                    title = "New Project",
+                    subtitle = "Start brewing",
+                    icon = Icons.Default.Add,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToProjects
+                )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            QuickActionCard(
-                title = "Ingredients",
-                subtitle = "Manage stock",
-                icon = Icons.Default.Inventory,
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToIngredients  // FIXED: Added navigation
-            )
+                // NEW: Recipe Builder Quick Action
+                QuickActionCard(
+                    title = "Recipe Builder",
+                    subtitle = "Create recipes",
+                    icon = Icons.Default.MenuBook,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToRecipeBuilder
+                )
+            }
+        }
 
-            QuickActionCard(
-                title = "Reminders",
-                subtitle = "Set alerts",
-                icon = Icons.Default.Notifications,
-                modifier = Modifier.weight(1f),
-                onClick = { /* Navigate to reminders */ }
-            )
+        // Second row of quick actions
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                QuickActionCard(
+                    title = "Calculators",
+                    subtitle = "ABV, IBU, SRM",
+                    icon = Icons.Default.Calculate,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToCalculators
+                )
+
+                QuickActionCard(
+                    title = "Ingredients",
+                    subtitle = "Manage stock",
+                    icon = Icons.Default.Inventory,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToIngredients
+                )
+            }
+        }
+
+        // Third row - moved reminders here for better layout
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                QuickActionCard(
+                    title = "Reminders",
+                    subtitle = "Set alerts", 
+                    icon = Icons.Default.Notifications,
+                    modifier = Modifier.weight(1f),
+                    onClick = { /* Navigate to reminders */ }
+                )
+
+                // Placeholder for future feature or empty space
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
 
         // Project Type Distribution (if there are projects)
         if (activeProjects.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            Text(
-                text = "Project Types",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            item {
+                Text(
+                    text = "Project Types",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
 
-            val projectsByType = activeProjects.groupBy { it.type }
-            
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(projectsByType.entries.toList()) { (type, projects) ->
-                    AssistChip(
-                        onClick = { /* Filter by type */ },
-                        label = { 
-                            Text("${type.displayName}: ${projects.size}")
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = getBeverageTypeIcon(type),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    )
+            item {
+                val projectsByType = activeProjects.groupBy { it.type }
+                
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(projectsByType.entries.toList()) { (type, projects) ->
+                        AssistChip(
+                            onClick = { /* Filter by type */ },
+                            label = { 
+                                Text("${type.displayName}: ${projects.size}")
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = getBeverageTypeIcon(type),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
+        }
+
+        // Add bottom padding to ensure content is not cut off
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -201,27 +240,27 @@ fun StatCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(120.dp) // Reduced from 140.dp for better mobile fit
+        modifier = Modifier.width(120.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp), // Reduced from 16.dp
+            modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(20.dp), // Reduced from 24.dp
+                modifier = Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = value,
-                fontSize = 18.sp, // Reduced from 20.sp
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = title,
-                fontSize = 11.sp, // Reduced from 12.sp
+                fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
@@ -239,7 +278,7 @@ fun RecentProjectCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(180.dp) // Reduced from 200.dp
+        modifier = Modifier.width(180.dp)
     ) {
         Column(
             modifier = Modifier.padding(12.dp)
@@ -263,7 +302,7 @@ fun RecentProjectCard(
                 )
             }
             
-            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
+            Spacer(modifier = Modifier.height(6.dp))
             
             Text(
                 text = project.currentPhase.displayName,
@@ -295,28 +334,28 @@ fun QuickActionCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(14.dp) // Reduced from 16.dp
+                .padding(14.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(28.dp), // Reduced from 32.dp
+                modifier = Modifier.size(28.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(6.dp)) // Reduced from 8.dp
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = title,
                 fontWeight = FontWeight.Medium,
-                fontSize = 14.sp, // Added explicit size
+                fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = subtitle,
-                fontSize = 11.sp, // Reduced from 12.sp
+                fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
