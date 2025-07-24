@@ -22,6 +22,11 @@ val bottomNavItems = listOf(
         label = "Brew"
     ),
     BottomNavItem(
+        screen = Screen.RecipeLibrary, // ADDED: Recipe Library to bottom nav
+        icon = Icons.Default.MenuBook,
+        label = "Recipes"
+    ),
+    BottomNavItem(
         screen = Screen.Calculators,
         icon = Icons.Default.Calculate,
         label = "Calc"
@@ -30,10 +35,5 @@ val bottomNavItems = listOf(
         screen = Screen.Ingredients,
         icon = Icons.Default.Inventory,
         label = "Ingredients"
-    ),
-    BottomNavItem(
-        screen = Screen.Settings,
-        icon = Icons.Default.Settings,
-        label = "More"
     )
 )
