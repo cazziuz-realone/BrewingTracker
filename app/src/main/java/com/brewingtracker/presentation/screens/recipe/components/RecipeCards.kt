@@ -14,6 +14,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brewingtracker.data.database.entities.*
 
+// Extension function to format quantities nicely
+fun Double.formatQuantity(): String {
+    return if (this % 1.0 == 0.0) {
+        this.toInt().toString()
+    } else {
+        String.format("%.2f", this)
+    }
+}
+
 @Composable
 fun BatchSizeCard(
     currentSize: BatchSize,
@@ -295,14 +304,5 @@ fun SelectedIngredientsCard(
                 }
             }
         }
-    }
-}
-
-// Extension function to format quantities nicely
-fun Double.formatQuantity(): String {
-    return if (this % 1.0 == 0.0) {
-        this.toInt().toString()
-    } else {
-        String.format("%.2f", this)
     }
 }
