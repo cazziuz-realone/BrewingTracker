@@ -46,3 +46,10 @@ data class Recipe(
 enum class RecipeDifficulty {
     BEGINNER, INTERMEDIATE, ADVANCED
 }
+
+// Data class for calculations (moved here to avoid duplication)
+data class RecipeCalculations(
+    val estimatedOG: Double,
+    val estimatedFG: Double,
+    val estimatedABV: Double
+)
