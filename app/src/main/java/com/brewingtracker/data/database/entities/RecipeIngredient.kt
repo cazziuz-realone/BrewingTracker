@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Embedded
+import androidx.room.Relation
 
 @Entity(
     tableName = "recipe_ingredients",
@@ -49,9 +51,13 @@ data class RecipeIngredient(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-// Data class for joining recipe ingredients with ingredient details
+// FIXED: Proper Room relationship data class
 data class RecipeIngredientWithDetails(
-    val recipeIngredient: RecipeIngredient,
+    @Embedded val recipeIngredient: RecipeIngredient,
+    @Relation(
+        parentColumn = "ingredientId",
+        entityColumn = "id"
+    )
     val ingredient: Ingredient
 )
 
