@@ -26,29 +26,29 @@ class ProjectViewModel @Inject constructor(
 
     fun createProject(
         name: String,
-        type: BeverageType, // Fixed: Use BeverageType instead of ProjectType
+        type: BeverageType,
         targetOG: Double? = null,
         targetFG: Double? = null,
         targetABV: Double? = null,
-        batchSize: Double = 5.0, // Fixed: Provide default value
+        batchSize: Double? = 5.0, // FIXED: Make nullable to match entity
         notes: String? = null
     ) {
         viewModelScope.launch {
             val project = Project(
-                id = UUID.randomUUID().toString(), // Fixed: Add required id
+                id = UUID.randomUUID().toString(),
                 name = name,
                 type = type,
-                batchSize = batchSize, // Fixed: This is required, not optional
+                batchSize = batchSize,
                 targetOG = targetOG,
                 targetFG = targetFG,
                 targetABV = targetABV,
                 notes = notes,
                 currentPhase = ProjectPhase.PLANNING,
-                isCompleted = false, // Fixed: Add required fields
+                isCompleted = false,
                 isFavorite = false,
                 isActive = true,
-                startDate = System.currentTimeMillis(), // Fixed: Add required startDate
-                updatedAt = System.currentTimeMillis() // Fixed: Add required updatedAt
+                startDate = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
             )
             projectDao.insertProject(project)
             _uiState.value = _uiState.value.copy(
@@ -66,13 +66,12 @@ class ProjectViewModel @Inject constructor(
 
     fun updateProjectPhase(projectId: String, phase: ProjectPhase) {
         viewModelScope.launch {
-            // Fixed: Pass the timestamp parameter that the DAO expects
             projectDao.updateProjectPhase(projectId, phase, System.currentTimeMillis())
         }
     }
 
     /**
-     * Delete a project - NEW FUNCTIONALITY
+     * Delete a project
      */
     fun deleteProject(projectId: String) {
         viewModelScope.launch {
@@ -96,7 +95,7 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
-    // Fixed: This should return a reactive Flow
+    // FIXED: This should return a reactive Flow
     fun getProjectById(projectId: String): Flow<Project?> {
         return allProjects.map { projectList ->
             projectList.find { it.id == projectId }
@@ -109,7 +108,6 @@ class ProjectViewModel @Inject constructor(
     
     /**
      * Get project ingredients with full ingredient details
-     * FIXED: Removed stateIn() to prevent conflicting initial values and flickering
      */
     fun getProjectIngredientsWithDetails(projectId: String) = 
         repository.getProjectIngredientsWithDetails(projectId)
@@ -124,7 +122,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     /**
-     * Update ingredient quantity and unit in project - NEW FUNCTIONALITY
+     * Update ingredient quantity and unit in project
      */
     fun updateProjectIngredient(
         projectId: String,
