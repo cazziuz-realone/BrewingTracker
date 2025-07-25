@@ -268,8 +268,9 @@ private fun ProjectCard(
             val currentIndex = phases.indexOf(project.currentPhase)
 
             Spacer(modifier = Modifier.height(8.dp))
+            // FIXED: LinearProgressIndicator requires a lambda for progress parameter in newer Compose versions
             LinearProgressIndicator(
-                progress = (currentIndex + 1).toFloat() / phases.size,
+                progress = { (currentIndex + 1).toFloat() / phases.size },
                 modifier = Modifier.fillMaxWidth()
             )
         }
