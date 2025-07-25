@@ -13,15 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brewingtracker.data.database.entities.*
-
-// Extension function to format quantities nicely
-fun Double.formatQuantity(): String {
-    return if (this % 1.0 == 0.0) {
-        this.toInt().toString()
-    } else {
-        String.format("%.2f", this)
-    }
-}
+import com.brewingtracker.data.models.*
+import com.brewingtracker.utils.formatQuantity
 
 @Composable
 fun BatchSizeCard(
