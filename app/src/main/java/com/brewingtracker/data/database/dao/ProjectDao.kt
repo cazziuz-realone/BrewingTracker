@@ -11,6 +11,10 @@ interface ProjectDao {
     @Query("SELECT * FROM projects WHERE isActive = 1 ORDER BY startDate DESC")
     fun getAllActiveProjects(): Flow<List<Project>>
 
+    // FIXED: Added missing getProjects method referenced by repository
+    @Query("SELECT * FROM projects ORDER BY startDate DESC")
+    fun getProjects(): Flow<List<Project>>
+
     @Query("SELECT * FROM projects WHERE type = :type AND isActive = 1 ORDER BY startDate DESC")
     fun getProjectsByType(type: BeverageType): Flow<List<Project>>
 
@@ -32,7 +36,7 @@ interface ProjectDao {
     @Delete
     suspend fun deleteProject(project: Project)
 
-    // NEW: Delete project by ID - ADDED
+    // FIXED: Changed parameter name to match repository usage
     @Query("DELETE FROM projects WHERE id = :projectId")
     suspend fun deleteProject(projectId: String)
 
