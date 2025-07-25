@@ -2,6 +2,8 @@ package com.brewingtracker.data.repository
 
 import com.brewingtracker.data.database.dao.*
 import com.brewingtracker.data.database.entities.*
+import com.brewingtracker.data.models.ProjectIngredientWithDetails
+import com.brewingtracker.data.models.RecipeIngredientWithDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -33,10 +35,7 @@ class BrewingRepository @Inject constructor(
     suspend fun deleteProject(projectId: String) = projectDao.deleteProject(projectId)
     
     // FIXED: Method name now matches ProjectDao
-    fun getProjects(): Flow<List<Project>> = projectDao.getProjects()
-    
-    // ADDED: Method for ProjectsViewModel
-    fun getAllActiveProjects(): Flow<List<Project>> = projectDao.getAllActiveProjects()
+    fun getAllProjects(): Flow<List<Project>> = projectDao.getAllProjects()
     
     // ADDED: Method for ProjectsViewModel  
     fun getFavoriteProjects(): Flow<List<Project>> = projectDao.getFavoriteProjects()
@@ -74,9 +73,14 @@ class BrewingRepository @Inject constructor(
     
     fun getIngredientsByType(type: IngredientType): Flow<List<Ingredient>> = ingredientDao.getIngredientsByType(type)
     
-    // ADDED: Search ingredients method for RecipeBuilderViewModel
-    suspend fun searchIngredients(type: IngredientType, query: String): List<Ingredient> =
-        recipeIngredientDao.searchIngredientsByTypeAndName(type, query)
+    // FIXED: Search ingredients method signature
+    suspend fun searchIngredients(query: String, type: IngredientType?): List<Ingredient> {
+        return if (type != null) {
+            ingredientDao.searchIngredientsByTypeAndName(type, query)
+        } else {
+            ingredientDao.searchIngredientsByName(query)
+        }
+    }
     
     suspend fun updateIngredientStock(ingredientId: Int, newStock: Double) = 
         ingredientDao.updateStock(ingredientId, newStock)
