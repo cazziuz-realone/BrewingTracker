@@ -230,12 +230,103 @@ class CalculatorViewModel @Inject constructor() : ViewModel() {
         }
     }
     
+    fun calculateWaterAmounts(
+        grainWeight: Double,
+        mashRatio: Double,
+        totalWater: Double,
+        grainAbsorption: Double = 0.125,
+        boilOffRate: Double = 1.25,
+        boilTime: Double = 1.0
+    ) {
+        viewModelScope.launch {
+            try {
+                if (grainWeight <= 0 || mashRatio <= 0 || totalWater <= 0) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Please enter valid values. All values must be greater than 0.",
+                        waterResult = null
+                    )
+                    return@launch
+                }
+                
+                // Calculate mash water (in quarts)
+                val mashWater = grainWeight * mashRatio
+                
+                // Calculate water absorbed by grain (in gallons)
+                val waterAbsorbed = grainWeight * grainAbsorption
+                
+                // Calculate boil-off loss (in gallons)
+                val boilOffLoss = boilOffRate * boilTime
+                
+                // Calculate sparge water needed (in gallons)
+                val spargeWater = totalWater - (mashWater / 4.0) + waterAbsorbed + boilOffLoss
+                
+                _uiState.value = _uiState.value.copy(
+                    waterResult = WaterCalculatorResult(
+                        grainWeight = grainWeight,
+                        mashRatio = mashRatio,
+                        totalWater = totalWater,
+                        grainAbsorption = grainAbsorption,
+                        boilOffRate = boilOffRate,
+                        boilTime = boilTime,
+                        calculatedMashWater = mashWater,
+                        calculatedSpargeWater = max(0.0, spargeWater),
+                        waterAbsorbed = waterAbsorbed,
+                        boilOffLoss = boilOffLoss,
+                        totalCalculatedWater = (mashWater / 4.0) + max(0.0, spargeWater)
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating water amounts: ${e.message}",
+                    waterResult = null
+                )
+            }
+        }
+    }
+    
+    fun calculateStrikeTemperature(
+        grainTemp: Double,
+        targetMashTemp: Double,
+        mashRatio: Double = 1.25
+    ) {
+        viewModelScope.launch {
+            try {
+                // Strike temperature formula: Strike Temp = Target Temp + (0.2 * Mash Ratio * (Target Temp - Grain Temp))
+                val strikeTemp = targetMashTemp + (0.2 * mashRatio * (targetMashTemp - grainTemp))
+                
+                _uiState.value = _uiState.value.copy(
+                    strikeTemperatureResult = StrikeTemperatureResult(
+                        grainTemp = grainTemp,
+                        targetMashTemp = targetMashTemp,
+                        mashRatio = mashRatio,
+                        calculatedStrikeTemp = strikeTemp
+                    ),
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error calculating strike temperature: ${e.message}",
+                    strikeTemperatureResult = null
+                )
+            }
+        }
+    }
+    
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
     
     fun clearResults() {
         _uiState.value = CalculatorUiState()
+    }
+    
+    fun clearWaterResults() {
+        _uiState.value = _uiState.value.copy(
+            waterResult = null,
+            strikeTemperatureResult = null,
+            error = null
+        )
     }
 }
 
@@ -247,6 +338,8 @@ data class CalculatorUiState(
     val dilutionResult: DilutionResult? = null,
     val carbonationResult: CarbonationResult? = null,
     val yeastResult: YeastResult? = null,
+    val waterResult: WaterCalculatorResult? = null,
+    val strikeTemperatureResult: StrikeTemperatureResult? = null,
     val error: String? = null
 )
 
@@ -300,4 +393,41 @@ data class YeastResult(
     val packagesNeeded: Int,
     val needsStarter: Boolean,
     val starterSizeLiters: Double
+)
+
+data class WaterCalculatorResult(
+    val grainWeight: Double,
+    val mashRatio: Double,
+    val totalWater: Double,
+    val grainAbsorption: Double,
+    val boilOffRate: Double,
+    val boilTime: Double,
+    val calculatedMashWater: Double,
+    val calculatedSpargeWater: Double,
+    val waterAbsorbed: Double,
+    val boilOffLoss: Double,
+    val totalCalculatedWater: Double
+)
+
+data class StrikeTemperatureResult(
+    val grainTemp: Double,
+    val targetMashTemp: Double,
+    val mashRatio: Double,
+    val calculatedStrikeTemp: Double
+)
+
+// Legacy state class for backward compatibility (if needed elsewhere)
+data class WaterCalculatorState(
+    val grainWeight: String = "",
+    val mashRatio: String = "",
+    val totalWater: String = "",
+    val grainAbsorption: String = "",
+    val boilOffRate: String = "",
+    val boilTime: String = "",
+    val grainTemp: String = "",
+    val targetMashTemp: String = "",
+    val calculatedMashWater: Double? = null,
+    val calculatedSpargeWater: Double? = null,
+    val calculatedStrikeTemp: Double? = null,
+    val isValid: Boolean = true
 )
