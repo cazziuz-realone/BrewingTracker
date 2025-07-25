@@ -11,9 +11,9 @@ interface ProjectDao {
     @Query("SELECT * FROM projects WHERE isActive = 1 ORDER BY startDate DESC")
     fun getAllActiveProjects(): Flow<List<Project>>
 
-    // FIXED: Added missing getProjects method referenced by repository
+    // FIXED: Renamed to match repository usage
     @Query("SELECT * FROM projects ORDER BY startDate DESC")
-    fun getProjects(): Flow<List<Project>>
+    fun getAllProjects(): Flow<List<Project>>
 
     @Query("SELECT * FROM projects WHERE type = :type AND isActive = 1 ORDER BY startDate DESC")
     fun getProjectsByType(type: BeverageType): Flow<List<Project>>
