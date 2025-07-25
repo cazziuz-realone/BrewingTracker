@@ -126,12 +126,20 @@ class BrewingRepository @Inject constructor(
         additionTime: String? = null
     ) = projectIngredientDao.updateProjectIngredientDetails(projectId, ingredientId, quantity, unit, additionTime)
     
+    // FIXED: Map Room entities to model entities
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
-        projectIngredientDao.getProjectIngredientsWithDetails(projectId)
+        projectIngredientDao.getProjectIngredientsWithDetails(projectId).map { roomEntities ->
+            roomEntities.map { roomEntity ->
+                com.brewingtracker.data.models.ProjectIngredientWithDetails(
+                    projectIngredient = roomEntity.projectIngredient,
+                    ingredient = roomEntity.ingredient
+                )
+            }
+        }
     
     // ADDED: Alias method to match ViewModel usage
     fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
-        projectIngredientDao.getProjectIngredientsWithDetails(projectId)
+        getProjectIngredients(projectId)
     
     // === RECIPE OPERATIONS ===
     suspend fun createRecipe(recipe: Recipe): String {
@@ -162,8 +170,16 @@ class BrewingRepository @Inject constructor(
     fun getRecipeIngredients(recipeId: String): Flow<List<RecipeIngredient>> = 
         recipeIngredientDao.getRecipeIngredients(recipeId)
     
+    // FIXED: Map Room entities to model entities
     fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>> = 
-        recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
+        recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId).map { roomEntities ->
+            roomEntities.map { roomEntity ->
+                com.brewingtracker.data.models.RecipeIngredientWithDetails(
+                    recipeIngredient = roomEntity.recipeIngredient,
+                    ingredient = roomEntity.ingredient
+                )
+            }
+        }
     
     // === RECIPE STEP OPERATIONS ===
     suspend fun insertRecipeStep(recipeStep: RecipeStep): Long = 
