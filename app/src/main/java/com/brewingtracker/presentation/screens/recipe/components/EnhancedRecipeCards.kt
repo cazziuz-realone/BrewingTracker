@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brewingtracker.data.database.entities.*
+import com.brewingtracker.data.models.*
+import com.brewingtracker.utils.formatQuantity
 
 @Composable
 fun BatchSizeCard(
@@ -210,7 +212,7 @@ fun CalculationsCard(
                     )
                 }
                 
-                if (calculations.estimatedIBU > 0) {
+                if (calculations.estimatedCost > 0) {
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Row(
@@ -218,16 +220,12 @@ fun CalculationsCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         CalculationMetric(
-                            label = "IBU",
-                            value = String.format("%.1f", calculations.estimatedIBU),
-                            modifier = Modifier.weight(1f)
-                        )
-                        CalculationMetric(
                             label = "Cost",
-                            value = "$${String.format("%.2f", calculations.totalCost)}",
+                            value = "$${String.format("%.2f", calculations.estimatedCost)}",
                             modifier = Modifier.weight(1f),
-                            highlight = calculations.totalCost > 0
+                            highlight = calculations.estimatedCost > 0
                         )
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -660,15 +658,5 @@ fun ProcessStepItem(
                 }
             }
         }
-    }
-}
-
-// Helper function for formatting quantities
-fun Double.formatQuantity(): String {
-    return when {
-        this % 1.0 == 0.0 -> this.toInt().toString()
-        this < 0.1 -> String.format("%.3f", this)
-        this < 1.0 -> String.format("%.2f", this)
-        else -> String.format("%.1f", this)
     }
 }
