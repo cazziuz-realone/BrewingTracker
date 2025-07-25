@@ -18,6 +18,7 @@ interface RecipeIngredientDao {
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     suspend fun getRecipeIngredientsSync(recipeId: String): List<RecipeIngredient>
     
+    // FIXED: Use proper Transaction annotation for Room relationships
     @Transaction
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>>
