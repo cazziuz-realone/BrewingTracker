@@ -26,6 +26,7 @@ class BrewingRepository @Inject constructor(
     
     suspend fun deleteProject(projectId: String) = projectDao.deleteProject(projectId)
     
+    // FIXED: Method name now matches ProjectDao
     fun getProjects(): Flow<List<Project>> = projectDao.getProjects()
     
     suspend fun getProjectById(projectId: String): Project? = projectDao.getProjectById(projectId)
@@ -66,6 +67,7 @@ class BrewingRepository @Inject constructor(
     suspend fun updateProjectIngredient(projectIngredient: ProjectIngredient) = 
         projectIngredientDao.updateProjectIngredient(projectIngredient)
     
+    // FIXED: Parameter name to match DAO method
     suspend fun removeIngredientFromProject(projectIngredientId: Int) = 
         projectIngredientDao.deleteProjectIngredient(projectIngredientId)
     
@@ -119,6 +121,9 @@ class BrewingRepository @Inject constructor(
         
         // Create new recipe
         createRecipe(newRecipe)
+        
+        // Duplicate ingredients using the DAO method
+        recipeIngredientDao.duplicateRecipeIngredients(sourceRecipeId, newRecipe.id)
         
         return newRecipe.id
     }
