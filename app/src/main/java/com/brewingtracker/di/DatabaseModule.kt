@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.brewingtracker.data.database.BrewingDatabase
 import com.brewingtracker.data.database.dao.*
+import com.brewingtracker.data.services.RecipeCalculationService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,7 +42,7 @@ object DatabaseModule {
         return database.projectIngredientDao()
     }
 
-    // NEW: Recipe Builder DAOs - FIXED MISSING DEPENDENCY INJECTION
+    // === RECIPE BUILDER DAOs ===
     @Provides
     fun provideRecipeDao(database: BrewingDatabase): RecipeDao {
         return database.recipeDao()
@@ -50,5 +51,23 @@ object DatabaseModule {
     @Provides
     fun provideRecipeIngredientDao(database: BrewingDatabase): RecipeIngredientDao {
         return database.recipeIngredientDao()
+    }
+
+    // NEW: Enhanced Recipe Builder DAOs
+    @Provides
+    fun provideRecipeStepDao(database: BrewingDatabase): RecipeStepDao {
+        return database.recipeStepDao()
+    }
+
+    @Provides
+    fun provideRecipeCalculationDao(database: BrewingDatabase): RecipeCalculationDao {
+        return database.recipeCalculationDao()
+    }
+
+    // === SERVICES ===
+    @Provides
+    @Singleton
+    fun provideRecipeCalculationService(): RecipeCalculationService {
+        return RecipeCalculationService()
     }
 }
