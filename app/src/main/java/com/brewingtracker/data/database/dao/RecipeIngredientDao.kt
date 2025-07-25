@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RecipeIngredientDao {
     
+    // FIXED: Return Flow to match repository expectation
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
-    suspend fun getRecipeIngredients(recipeId: String): List<RecipeIngredient>
+    fun getRecipeIngredients(recipeId: String): Flow<List<RecipeIngredient>>
     
-    // ADDED: Synchronous version needed by RecipeLibraryViewModel for duplication
+    // ADDED: Synchronous version needed for recipe duplication
     @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY additionTiming, createdAt")
     suspend fun getRecipeIngredientsSync(recipeId: String): List<RecipeIngredient>
     
@@ -46,7 +47,6 @@ interface RecipeIngredientDao {
     @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
     suspend fun deleteAllRecipeIngredients(recipeId: String)
     
-    // ADDED: Method needed by RecipeLibraryViewModel for recipe deletion
     @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
     suspend fun deleteRecipeIngredientsByRecipeId(recipeId: String)
     
@@ -75,7 +75,7 @@ interface RecipeIngredientDao {
         sourceRecipeId: String, 
         newRecipeId: String
     ) {
-        val sourceIngredients = getRecipeIngredients(sourceRecipeId)
+        val sourceIngredients = getRecipeIngredientsSync(sourceRecipeId)
         val newIngredients = sourceIngredients.map { ingredient ->
             ingredient.copy(
                 id = 0, // Auto-generate new ID
