@@ -19,9 +19,11 @@ import kotlinx.coroutines.launch
         Yeast::class,
         ProjectIngredient::class,
         Recipe::class,           // ← Recipe builder entities
-        RecipeIngredient::class  // ← Recipe builder entities
+        RecipeIngredient::class, // ← Recipe builder entities
+        RecipeStep::class,       // ← NEW: Recipe process steps
+        RecipeCalculation::class // ← NEW: Cached recipe calculations
     ],
-    version = 11,  // INCREMENTED to add 50+ additional specialized mead & wine ingredients
+    version = 12,  // INCREMENTED to add RecipeStep and RecipeCalculation entities
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -31,8 +33,10 @@ abstract class BrewingDatabase : RoomDatabase() {
     abstract fun ingredientDao(): IngredientDao
     abstract fun yeastDao(): YeastDao
     abstract fun projectIngredientDao(): ProjectIngredientDao
-    abstract fun recipeDao(): RecipeDao                    // ← Recipe builder DAOs
-    abstract fun recipeIngredientDao(): RecipeIngredientDao // ← Recipe builder DAOs
+    abstract fun recipeDao(): RecipeDao                          // ← Recipe builder DAOs
+    abstract fun recipeIngredientDao(): RecipeIngredientDao     // ← Recipe builder DAOs
+    abstract fun recipeStepDao(): RecipeStepDao                 // ← NEW: Recipe step management
+    abstract fun recipeCalculationDao(): RecipeCalculationDao   // ← NEW: Recipe calculation caching
 
     companion object {
         @Volatile
