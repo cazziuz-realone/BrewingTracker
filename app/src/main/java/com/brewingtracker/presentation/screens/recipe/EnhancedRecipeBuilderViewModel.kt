@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.brewingtracker.data.database.entities.*
 import com.brewingtracker.data.repository.BrewingRepository
 import com.brewingtracker.data.services.RecipeCalculationService
+import com.brewingtracker.data.models.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -91,8 +92,8 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
             try {
                 val filteredIngredients = if (query.isBlank()) {
                     currentState.selectedCategory?.let { category ->
-                        repository.getIngredientsByType(category)
-                    } ?: repository.getAllIngredients()
+                        repository.getIngredientsByType(category).first()
+                    } ?: repository.getAllIngredients().first()
                 } else {
                     repository.searchIngredients(query, currentState.selectedCategory)
                 }
@@ -323,7 +324,13 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                 )
 
                 _uiState.value = _uiState.value.copy(
-                    calculations = calculations
+                    calculations = LiveRecipeCalculations(
+                        estimatedOG = calculations.estimatedOG,
+                        estimatedFG = calculations.estimatedFG,
+                        estimatedABV = calculations.estimatedABV,
+                        batchSize = calculations.batchSize,
+                        isCalculating = false
+                    )
                 )
 
             } catch (e: Exception) {
