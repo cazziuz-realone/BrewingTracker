@@ -3,7 +3,7 @@ package com.brewingtracker.data.database.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import com.brewingtracker.data.database.entities.ProjectIngredient
-import com.brewingtracker.data.models.ProjectIngredientWithDetails
+import com.brewingtracker.data.database.entities.ProjectIngredientWithDetails
 
 @Dao
 interface ProjectIngredientDao {
