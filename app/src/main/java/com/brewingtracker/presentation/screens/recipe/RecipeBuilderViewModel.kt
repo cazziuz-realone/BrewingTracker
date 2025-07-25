@@ -16,8 +16,8 @@ class RecipeBuilderViewModel @Inject constructor(
     private val recipeIngredientDao: RecipeIngredientDao
 ) : ViewModel() {
     
-    private val _uiState = MutableStateFlow(RecipeBuilderUiState())
-    val uiState: StateFlow<RecipeBuilderUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(LegacyRecipeBuilderUiState())
+    val uiState: StateFlow<LegacyRecipeBuilderUiState> = _uiState.asStateFlow()
     
     init {
         // Set up search flow
@@ -394,7 +394,7 @@ class RecipeBuilderViewModel @Inject constructor(
     }
 }
 
-data class RecipeBuilderUiState(
+data class LegacyRecipeBuilderUiState(
     val recipe: Recipe = Recipe(
         name = "",
         beverageType = BeverageType.MEAD,
