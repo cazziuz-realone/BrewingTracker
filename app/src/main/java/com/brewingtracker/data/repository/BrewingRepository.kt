@@ -3,6 +3,7 @@ package com.brewingtracker.data.repository
 import com.brewingtracker.data.database.dao.*
 import com.brewingtracker.data.database.entities.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +14,9 @@ class BrewingRepository @Inject constructor(
     private val yeastDao: YeastDao,
     private val projectIngredientDao: ProjectIngredientDao,
     private val recipeDao: RecipeDao,
-    private val recipeIngredientDao: RecipeIngredientDao
+    private val recipeIngredientDao: RecipeIngredientDao,
+    private val recipeStepDao: RecipeStepDao,
+    private val recipeCalculationDao: RecipeCalculationDao
 ) {
     
     // === PROJECT OPERATIONS ===
@@ -61,9 +64,19 @@ class BrewingRepository @Inject constructor(
     
     fun getAllIngredients(): Flow<List<Ingredient>> = ingredientDao.getAllIngredients()
     
+    // ADDED: Method for IngredientsViewModel
+    fun getInStockIngredients(): Flow<List<Ingredient>> = 
+        ingredientDao.getAllIngredients().map { ingredients ->
+            ingredients.filter { it.currentStock > 0 }
+        }
+    
     suspend fun getIngredientById(ingredientId: Int): Ingredient? = ingredientDao.getIngredientById(ingredientId)
     
     fun getIngredientsByType(type: IngredientType): Flow<List<Ingredient>> = ingredientDao.getIngredientsByType(type)
+    
+    // ADDED: Search ingredients method for RecipeBuilderViewModel
+    suspend fun searchIngredients(type: IngredientType, query: String): List<Ingredient> =
+        recipeIngredientDao.searchIngredientsByTypeAndName(type, query)
     
     suspend fun updateIngredientStock(ingredientId: Int, newStock: Double) = 
         ingredientDao.updateStock(ingredientId, newStock)
@@ -147,6 +160,19 @@ class BrewingRepository @Inject constructor(
     
     fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>> = 
         recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
+    
+    // === RECIPE STEP OPERATIONS ===
+    suspend fun insertRecipeStep(recipeStep: RecipeStep): Long = 
+        recipeStepDao.insertRecipeStep(recipeStep)
+    
+    suspend fun updateRecipeStep(recipeStep: RecipeStep) = 
+        recipeStepDao.updateRecipeStep(recipeStep)
+    
+    suspend fun deleteRecipeStep(stepId: Int) = 
+        recipeStepDao.deleteRecipeStep(stepId)
+    
+    fun getRecipeSteps(recipeId: String): Flow<List<RecipeStep>> = 
+        recipeStepDao.getRecipeSteps(recipeId)
     
     // === RECIPE DUPLICATION ===
     suspend fun duplicateRecipe(sourceRecipeId: String, newName: String): String {
