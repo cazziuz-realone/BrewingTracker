@@ -2,9 +2,9 @@ package com.brewingtracker.data.database.dao
 
 import androidx.room.*
 import com.brewingtracker.data.database.entities.RecipeIngredient
-import com.brewingtracker.data.database.entities.RecipeIngredientWithDetails
 import com.brewingtracker.data.database.entities.Ingredient
 import com.brewingtracker.data.database.entities.IngredientType
+import com.brewingtracker.data.models.RecipeIngredientWithDetails
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -86,24 +86,6 @@ interface RecipeIngredientDao {
         }
         insertRecipeIngredients(newIngredients)
     }
-    
-    // Search ingredients by type and name for the recipe builder
-    @Query("""
-        SELECT * FROM ingredients 
-        WHERE type = :type 
-        AND (name LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%')
-        ORDER BY name ASC
-        LIMIT 50
-    """)
-    suspend fun searchIngredientsByTypeAndName(type: IngredientType, query: String): List<Ingredient>
-    
-    @Query("""
-        SELECT * FROM ingredients 
-        WHERE type = :type 
-        ORDER BY name ASC
-        LIMIT 100
-    """)
-    suspend fun getIngredientsByType(type: IngredientType): List<Ingredient>
 }
 
 // Data class for inventory checking
