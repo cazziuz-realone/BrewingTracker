@@ -22,6 +22,9 @@ class BrewingRepository @Inject constructor(
         return project.id
     }
     
+    // ADDED: Alias for ProjectsViewModel
+    suspend fun insertProject(project: Project) = createProject(project)
+    
     suspend fun updateProject(project: Project) = projectDao.updateProject(project)
     
     suspend fun deleteProject(projectId: String) = projectDao.deleteProject(projectId)
@@ -29,7 +32,25 @@ class BrewingRepository @Inject constructor(
     // FIXED: Method name now matches ProjectDao
     fun getProjects(): Flow<List<Project>> = projectDao.getProjects()
     
+    // ADDED: Method for ProjectsViewModel
+    fun getAllActiveProjects(): Flow<List<Project>> = projectDao.getAllActiveProjects()
+    
+    // ADDED: Method for ProjectsViewModel  
+    fun getFavoriteProjects(): Flow<List<Project>> = projectDao.getFavoriteProjects()
+    
     suspend fun getProjectById(projectId: String): Project? = projectDao.getProjectById(projectId)
+    
+    // ADDED: Project phase update method
+    suspend fun updateProjectPhase(projectId: String, phase: ProjectPhase) = 
+        projectDao.updateProjectPhase(projectId, phase, System.currentTimeMillis())
+    
+    // ADDED: Project favorite toggle method
+    suspend fun updateProjectFavorite(projectId: String, isFavorite: Boolean) = 
+        projectDao.updateProjectFavorite(projectId, isFavorite, System.currentTimeMillis())
+    
+    // ADDED: Project completion method
+    suspend fun updateProjectCompletion(projectId: String, isCompleted: Boolean) = 
+        projectDao.updateProjectCompletion(projectId, isCompleted, System.currentTimeMillis())
     
     // === INGREDIENT OPERATIONS ===
     suspend fun addIngredient(ingredient: Ingredient) = ingredientDao.insertIngredient(ingredient)
