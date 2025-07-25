@@ -3,20 +3,15 @@ package com.brewingtracker.data.database.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import com.brewingtracker.data.database.entities.ProjectIngredient
-import com.brewingtracker.data.database.entities.IngredientType
+import com.brewingtracker.data.models.ProjectIngredientWithDetails
 
 @Dao
 interface ProjectIngredientDao {
     @Query("SELECT * FROM project_ingredients WHERE projectId = :projectId")
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredient>>
 
-    @Query("""
-        SELECT pi.*, i.name as ingredientName, i.type as ingredientType 
-        FROM project_ingredients pi 
-        INNER JOIN ingredients i ON pi.ingredientId = i.id 
-        WHERE pi.projectId = :projectId
-        ORDER BY i.type, i.name
-    """)
+    @Transaction
+    @Query("SELECT * FROM project_ingredients WHERE projectId = :projectId ORDER BY additionTiming, createdAt")
     fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -46,9 +41,9 @@ interface ProjectIngredientDao {
 
     @Query("""
         UPDATE project_ingredients 
-        SET quantity = :quantity, 
+        SET plannedQuantity = :quantity, 
             unit = :unit, 
-            additionTime = :additionTime 
+            additionTiming = :additionTime 
         WHERE projectId = :projectId AND ingredientId = :ingredientId
     """)
     suspend fun updateProjectIngredientDetails(
@@ -59,17 +54,3 @@ interface ProjectIngredientDao {
         additionTime: String? = null
     )
 }
-
-// FIXED: Data class with proper types - ingredientType should be IngredientType enum
-data class ProjectIngredientWithDetails(
-    val id: Int,
-    val projectId: String,
-    val ingredientId: Int,
-    val quantity: Double,
-    val unit: String,
-    val additionTime: String?,
-    val notes: String?,
-    val createdAt: Long,
-    val ingredientName: String,
-    val ingredientType: IngredientType  // FIXED: Changed from String to IngredientType
-)
