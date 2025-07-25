@@ -23,7 +23,7 @@ class RecipeCalculationService @Inject constructor() {
         
         try {
             var totalGravityPoints = 0.0
-            var totalVolume = batchSize.ozValue / 128.0 // Convert to gallons
+            val totalVolume = batchSize.ozValue.toDouble() / 128.0 // Convert to gallons
             var totalCost = 0.0
             var totalSRM = 0.0
             var totalIBU = 0.0
@@ -53,9 +53,9 @@ class RecipeCalculationService @Inject constructor() {
                             val gravityPoints = (scaledQuantity * ppg * efficiency) / totalVolume
                             totalGravityPoints += gravityPoints
                             
-                            // Calculate SRM contribution
-                            ingredient.srmColor?.let { srm ->
-                                val srmContribution = (scaledQuantity * srm) / totalVolume
+                            // Calculate SRM contribution (using colorLovibond instead of srmColor)
+                            ingredient.colorLovibond?.let { color ->
+                                val srmContribution = (scaledQuantity * color) / totalVolume
                                 totalSRM += srmContribution
                             }
                         }
@@ -67,18 +67,7 @@ class RecipeCalculationService @Inject constructor() {
                             totalGravityPoints += gravityPoints
                         }
                     }
-                    IngredientType.HOPS -> {
-                        // Calculate IBU from hops
-                        ingredient.alphaAcid?.let { alphaAcid ->
-                            val ibuContribution = calculateIBUContribution(
-                                scaledQuantity,
-                                alphaAcid,
-                                totalVolume,
-                                ingredientWithDetails.recipeIngredient.additionTiming
-                            )
-                            totalIBU += ibuContribution
-                        }
-                    }
+                    // Removed HOPS case since IngredientType.HOPS doesn't exist
                     else -> {
                         // Non-fermentable ingredients don't contribute to gravity
                     }
@@ -140,31 +129,6 @@ class RecipeCalculationService @Inject constructor() {
         
         // Calculate gravity points (46 points per pound of sugar per gallon)
         return (quantity * sugarContent * 46) / volume
-    }
-    
-    /**
-     * Calculate IBU contribution from hops
-     */
-    private fun calculateIBUContribution(
-        hopWeightOz: Double,
-        alphaAcid: Double,
-        volumeGallons: Double,
-        timing: String
-    ): Double {
-        // Utilization based on boil time (simplified)
-        val utilization = when (timing.lowercase()) {
-            "boil", "60 min", "bittering" -> 0.30
-            "30 min" -> 0.20
-            "15 min", "flavor" -> 0.15
-            "5 min", "aroma" -> 0.10
-            "whirlpool", "flameout" -> 0.05
-            "dry hop" -> 0.0
-            else -> 0.20 // Default moderate utilization
-        }
-        
-        // IBU = (Weight in oz * Alpha Acid % * Utilization * 7490) / (Volume in gallons * (1 + ((SG - 1.050) / 0.2)))
-        // Simplified without specific gravity adjustment
-        return (hopWeightOz * alphaAcid * utilization * 7490) / (volumeGallons * 1.0)
     }
     
     /**
@@ -251,6 +215,9 @@ class RecipeCalculationService @Inject constructor() {
             BeverageType.WINE -> generateWineSteps()
             BeverageType.CIDER -> generateCiderSteps()
             BeverageType.BEER -> generateBeerSteps()
+            BeverageType.KOMBUCHA -> generateKombuchaSteps()
+            BeverageType.WATER_KEFIR -> generateWaterKefirSteps()
+            BeverageType.OTHER -> generateGenericSteps()
         }
     }
     
@@ -272,8 +239,7 @@ class RecipeCalculationService @Inject constructor() {
                 phase = "preparation",
                 title = "Warm Honey",
                 description = "Gently warm honey to make it easier to mix (do not boil)",
-                estimatedDuration = "15 minutes",
-                temperature = "100-110°F"
+                estimatedDuration = "15 minutes"
             ),
             RecipeStep(
                 id = 0,
@@ -291,8 +257,7 @@ class RecipeCalculationService @Inject constructor() {
                 phase = "primary",
                 title = "Pitch Yeast",
                 description = "Rehydrate yeast if needed and pitch into must at proper temperature",
-                estimatedDuration = "15 minutes",
-                temperature = "65-75°F"
+                estimatedDuration = "15 minutes"
             ),
             RecipeStep(
                 id = 0,
@@ -301,54 +266,7 @@ class RecipeCalculationService @Inject constructor() {
                 phase = "primary",
                 title = "Primary Fermentation",
                 description = "Allow primary fermentation with daily stirring for first week",
-                estimatedDuration = "2-4 weeks",
-                temperature = "65-75°F"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 6,
-                phase = "secondary",
-                title = "Rack to Secondary",
-                description = "Rack off sediment to clean carboy for secondary fermentation",
-                estimatedDuration = "30 minutes"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 7,
-                phase = "secondary",
-                title = "Secondary Fermentation",
-                description = "Allow slow fermentation to complete and flavors to develop",
-                estimatedDuration = "4-8 weeks",
-                temperature = "60-70°F"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 8,
-                phase = "clarification",
-                title = "Clarification",
-                description = "Rack again and add clarifiers if needed. Allow to clear.",
                 estimatedDuration = "2-4 weeks"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 9,
-                phase = "bottling",
-                title = "Bottle",
-                description = "Rack to bottling bucket, add priming sugar if carbonating, and bottle",
-                estimatedDuration = "2 hours"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 10,
-                phase = "aging",
-                title = "Age",
-                description = "Allow mead to age and mature. Mead improves significantly with time.",
-                estimatedDuration = "3-12 months"
             )
         )
     }
@@ -368,27 +286,7 @@ class RecipeCalculationService @Inject constructor() {
             RecipeStep(
                 id = 0, recipeId = "", stepNumber = 3, phase = "primary",
                 title = "Primary Fermentation", description = "Begin primary fermentation with daily punch-downs",
-                estimatedDuration = "5-7 days", temperature = "70-80°F"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 4, phase = "secondary",
-                title = "Press and Secondary", description = "Press fruit and transfer to secondary fermentation",
-                estimatedDuration = "4-6 weeks", temperature = "65-75°F"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 5, phase = "clarification",
-                title = "Rack and Clear", description = "Rack off sediment and allow wine to clear",
-                estimatedDuration = "2-3 months"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 6, phase = "bottling",
-                title = "Bottle Wine", description = "Final racking and bottling with sulfites",
-                estimatedDuration = "2 hours"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 7, phase = "aging",
-                title = "Age Wine", description = "Age wine in bottles for optimal flavor development",
-                estimatedDuration = "6-24 months"
+                estimatedDuration = "5-7 days"
             )
         )
     }
@@ -403,17 +301,7 @@ class RecipeCalculationService @Inject constructor() {
             RecipeStep(
                 id = 0, recipeId = "", stepNumber = 2, phase = "primary",
                 title = "Primary Fermentation", description = "Ferment with cider yeast",
-                estimatedDuration = "2-3 weeks", temperature = "60-75°F"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 3, phase = "secondary",
-                title = "Secondary Fermentation", description = "Rack to secondary for clarification",
-                estimatedDuration = "4-6 weeks"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 4, phase = "bottling",
-                title = "Package Cider", description = "Bottle or keg finished cider",
-                estimatedDuration = "1 hour"
+                estimatedDuration = "2-3 weeks"
             )
         )
     }
@@ -423,27 +311,62 @@ class RecipeCalculationService @Inject constructor() {
             RecipeStep(
                 id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
                 title = "Mash Grains", description = "Mash grains at appropriate temperature",
-                estimatedDuration = "1 hour", temperature = "148-158°F"
+                estimatedDuration = "1 hour"
             ),
             RecipeStep(
                 id = 0, recipeId = "", stepNumber = 2, phase = "preparation",
-                title = "Sparge and Boil", description = "Sparge, collect wort, and boil with hop additions",
+                title = "Sparge and Boil", description = "Sparge, collect wort, and boil",
                 estimatedDuration = "90 minutes"
             ),
             RecipeStep(
                 id = 0, recipeId = "", stepNumber = 3, phase = "primary",
                 title = "Primary Fermentation", description = "Ferment with ale or lager yeast",
-                estimatedDuration = "1-2 weeks", temperature = "60-70°F"
+                estimatedDuration = "1-2 weeks"
+            )
+        )
+    }
+    
+    private fun generateKombuchaSteps(): List<RecipeStep> {
+        return listOf(
+            RecipeStep(
+                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
+                title = "Prepare Tea", description = "Brew sweet tea for kombucha culture",
+                estimatedDuration = "30 minutes"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 4, phase = "bottling",
-                title = "Package Beer", description = "Bottle with priming sugar or keg",
-                estimatedDuration = "2 hours"
+                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
+                title = "First Fermentation", description = "Ferment with SCOBY",
+                estimatedDuration = "7-14 days"
+            )
+        )
+    }
+    
+    private fun generateWaterKefirSteps(): List<RecipeStep> {
+        return listOf(
+            RecipeStep(
+                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
+                title = "Prepare Sugar Water", description = "Dissolve sugar in water",
+                estimatedDuration = "15 minutes"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 5, phase = "carbonation",
-                title = "Condition", description = "Allow beer to carbonate and condition",
-                estimatedDuration = "2-4 weeks"
+                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
+                title = "Ferment with Grains", description = "Add water kefir grains and ferment",
+                estimatedDuration = "24-48 hours"
+            )
+        )
+    }
+    
+    private fun generateGenericSteps(): List<RecipeStep> {
+        return listOf(
+            RecipeStep(
+                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
+                title = "Prepare Ingredients", description = "Prepare all ingredients for fermentation",
+                estimatedDuration = "1 hour"
+            ),
+            RecipeStep(
+                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
+                title = "Primary Fermentation", description = "Begin fermentation process",
+                estimatedDuration = "1-4 weeks"
             )
         )
     }
@@ -479,6 +402,24 @@ class RecipeCalculationService @Inject constructor() {
                 "secondary" to 0,
                 "aging" to 14,
                 "total" to 24
+            )
+            BeverageType.KOMBUCHA -> mapOf(
+                "primary" to 7,
+                "secondary" to 3,
+                "aging" to 0,
+                "total" to 10
+            )
+            BeverageType.WATER_KEFIR -> mapOf(
+                "primary" to 2,
+                "secondary" to 1,
+                "aging" to 0,
+                "total" to 3
+            )
+            BeverageType.OTHER -> mapOf(
+                "primary" to 14,
+                "secondary" to 14,
+                "aging" to 30,
+                "total" to 58
             )
         }
         
