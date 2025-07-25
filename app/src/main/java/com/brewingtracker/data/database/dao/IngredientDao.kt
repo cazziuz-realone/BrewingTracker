@@ -11,7 +11,7 @@ interface IngredientDao {
     fun getAllIngredients(): Flow<List<Ingredient>>
 
     @Query("SELECT * FROM ingredients WHERE type = :type ORDER BY name ASC")
-    fun getIngredientsByType(type: String): Flow<List<Ingredient>>
+    fun getIngredientsByType(type: IngredientType): Flow<List<Ingredient>>
 
     @Query("SELECT * FROM ingredients WHERE beverageTypes LIKE '%' || :beverageType || '%' ORDER BY name ASC")
     fun getIngredientsByBeverageType(beverageType: String): Flow<List<Ingredient>>
@@ -24,6 +24,13 @@ interface IngredientDao {
 
     @Query("SELECT * FROM ingredients WHERE currentStock > 0 ORDER BY name ASC")
     fun getInStockIngredients(): Flow<List<Ingredient>>
+
+    // NEW: Search methods for recipe builder
+    @Query("SELECT * FROM ingredients WHERE name LIKE '%' || :query || '%' ORDER BY name ASC")
+    suspend fun searchIngredientsByName(query: String): List<Ingredient>
+
+    @Query("SELECT * FROM ingredients WHERE type = :type AND name LIKE '%' || :query || '%' ORDER BY name ASC")
+    suspend fun searchIngredientsByTypeAndName(type: IngredientType, query: String): List<Ingredient>
 
     // NEW: Get ingredient count for database initialization check
     @Query("SELECT COUNT(*) FROM ingredients")
@@ -40,6 +47,9 @@ interface IngredientDao {
 
     @Delete
     suspend fun deleteIngredient(ingredient: Ingredient)
+
+    @Query("DELETE FROM ingredients WHERE id = :ingredientId")
+    suspend fun deleteIngredient(ingredientId: Int)
 
     @Query("UPDATE ingredients SET currentStock = :stock, updatedAt = :timestamp WHERE id = :ingredientId")
     suspend fun updateStock(ingredientId: Int, stock: Double, timestamp: Long = System.currentTimeMillis())
