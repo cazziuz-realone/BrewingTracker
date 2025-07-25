@@ -146,7 +146,8 @@ fun ProjectDetailScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                             )
                             Text(
-                                text = proj.type.name.lowercase().replaceFirstChar { it.uppercase() },
+                                // FIXED: Use proper enum display name instead of incorrect string conversion
+                                text = proj.type.displayName,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -283,7 +284,7 @@ fun ProjectDetailScreen(
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Science,
+                                    imageVector = Icons.Default.Science,  
                                     contentDescription = "Add Reading",
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -678,32 +679,32 @@ private fun ExpandableProjectIngredientItem(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    // Get ingredient type icon based on ingredient type string
-    val typeIcon = when (ingredient.ingredientType.uppercase()) {
-        "GRAIN" -> "🌾"
-        "HOP" -> "🍃"
-        "FRUIT" -> "🍎"
-        "ADJUNCT" -> "🍯"
-        "SPICE" -> "🌶️"
-        "YEAST_NUTRIENT" -> "🧪"
-        "ACID" -> "⚗️"
-        "WATER_TREATMENT" -> "💧"
-        "CLARIFIER" -> "🔍"
-        else -> "📦"
+    // FIXED: Get ingredient type icon based on ingredient type enum
+    val typeIcon = when (ingredient.ingredientType) {
+        com.brewingtracker.data.database.entities.IngredientType.GRAIN -> "🌾"
+        com.brewingtracker.data.database.entities.IngredientType.HOP -> "🍃"
+        com.brewingtracker.data.database.entities.IngredientType.FRUIT -> "🍎"
+        com.brewingtracker.data.database.entities.IngredientType.ADJUNCT -> "🍯"
+        com.brewingtracker.data.database.entities.IngredientType.SPICE -> "🌶️"
+        com.brewingtracker.data.database.entities.IngredientType.YEAST_NUTRIENT -> "🧪"
+        com.brewingtracker.data.database.entities.IngredientType.ACID -> "⚗️"
+        com.brewingtracker.data.database.entities.IngredientType.WATER_TREATMENT -> "💧"
+        com.brewingtracker.data.database.entities.IngredientType.CLARIFIER -> "🔍"
+        com.brewingtracker.data.database.entities.IngredientType.OTHER -> "📦"
     }
 
-    // Get ingredient type color
-    val typeColor = when (ingredient.ingredientType.uppercase()) {
-        "GRAIN" -> MaterialTheme.colorScheme.primaryContainer
-        "HOP" -> MaterialTheme.colorScheme.secondaryContainer
-        "FRUIT" -> MaterialTheme.colorScheme.tertiaryContainer
-        "ADJUNCT" -> MaterialTheme.colorScheme.errorContainer
-        "SPICE" -> MaterialTheme.colorScheme.surfaceVariant
-        "YEAST_NUTRIENT" -> MaterialTheme.colorScheme.primaryContainer
-        "ACID" -> MaterialTheme.colorScheme.errorContainer
-        "WATER_TREATMENT" -> MaterialTheme.colorScheme.secondaryContainer
-        "CLARIFIER" -> MaterialTheme.colorScheme.tertiaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant
+    // FIXED: Get ingredient type color based on enum
+    val typeColor = when (ingredient.ingredientType) {
+        com.brewingtracker.data.database.entities.IngredientType.GRAIN -> MaterialTheme.colorScheme.primaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.HOP -> MaterialTheme.colorScheme.secondaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.FRUIT -> MaterialTheme.colorScheme.tertiaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.ADJUNCT -> MaterialTheme.colorScheme.errorContainer
+        com.brewingtracker.data.database.entities.IngredientType.SPICE -> MaterialTheme.colorScheme.surfaceVariant
+        com.brewingtracker.data.database.entities.IngredientType.YEAST_NUTRIENT -> MaterialTheme.colorScheme.primaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.ACID -> MaterialTheme.colorScheme.errorContainer
+        com.brewingtracker.data.database.entities.IngredientType.WATER_TREATMENT -> MaterialTheme.colorScheme.secondaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.CLARIFIER -> MaterialTheme.colorScheme.tertiaryContainer
+        com.brewingtracker.data.database.entities.IngredientType.OTHER -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     Card(
@@ -751,7 +752,8 @@ private fun ExpandableProjectIngredientItem(
                             onClick = { },
                             label = {
                                 Text(
-                                    text = ingredient.ingredientType.lowercase().replaceFirstChar { it.uppercase() },
+                                    // FIXED: Use proper enum name conversion
+                                    text = ingredient.ingredientType.name.lowercase(Locale.getDefault()).replaceFirstChar { it.titlecase(Locale.getDefault()) },
                                     fontSize = 12.sp
                                 )
                             },
@@ -844,7 +846,8 @@ private fun ExpandableProjectIngredientItem(
                         ingredient.additionTime?.let { time ->
                             add("Addition Time" to time)
                         }
-                        add("Type" to ingredient.ingredientType.lowercase().replaceFirstChar { it.uppercase() })
+                        // FIXED: Use proper enum name conversion
+                        add("Type" to ingredient.ingredientType.name.lowercase(Locale.getDefault()).replaceFirstChar { it.titlecase(Locale.getDefault()) })
                         ingredient.notes?.let { notes ->
                             add("Notes" to notes)
                         }
