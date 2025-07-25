@@ -4,7 +4,7 @@ import androidx.room.*
 import com.brewingtracker.data.database.entities.RecipeIngredient
 import com.brewingtracker.data.database.entities.Ingredient
 import com.brewingtracker.data.database.entities.IngredientType
-import com.brewingtracker.data.models.RecipeIngredientWithDetails
+import com.brewingtracker.data.database.entities.RecipeIngredientWithDetails
 import kotlinx.coroutines.flow.Flow
 
 @Dao
