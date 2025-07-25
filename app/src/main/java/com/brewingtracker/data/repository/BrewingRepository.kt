@@ -71,7 +71,28 @@ class BrewingRepository @Inject constructor(
     suspend fun removeIngredientFromProject(projectIngredientId: Int) = 
         projectIngredientDao.deleteProjectIngredient(projectIngredientId)
     
+    // ADDED: Method to remove ingredient by project and ingredient IDs
+    suspend fun removeIngredientFromProject(projectId: String, ingredientId: Int) = 
+        projectIngredientDao.removeIngredientFromProject(projectId, ingredientId)
+    
+    // ADDED: Method to remove all ingredients from a project
+    suspend fun removeAllIngredientsFromProject(projectId: String) = 
+        projectIngredientDao.removeAllIngredientsFromProject(projectId)
+    
+    // ADDED: Method to update project ingredient with individual parameters
+    suspend fun updateProjectIngredient(
+        projectId: String,
+        ingredientId: Int,
+        quantity: Double,
+        unit: String,
+        additionTime: String? = null
+    ) = projectIngredientDao.updateProjectIngredientDetails(projectId, ingredientId, quantity, unit, additionTime)
+    
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
+        projectIngredientDao.getProjectIngredientsWithDetails(projectId)
+    
+    // ADDED: Alias method to match ViewModel usage
+    fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
         projectIngredientDao.getProjectIngredientsWithDetails(projectId)
     
     // === RECIPE OPERATIONS ===
