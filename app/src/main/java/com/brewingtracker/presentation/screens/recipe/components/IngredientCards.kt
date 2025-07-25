@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.brewingtracker.data.database.entities.*
+import java.util.*
 
 @Composable
 fun IngredientCategoriesCard(
@@ -67,8 +68,9 @@ fun IngredientCategoriesCard(
                                 ) {
                                     Text(emoji)
                                     Text(
-                                        text = category.name.lowercase()
-                                            .replaceFirstChar { it.uppercase() }
+                                        // FIXED: Use proper string case conversion with Locale
+                                        text = category.name.lowercase(Locale.getDefault())
+                                            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
                                             .replace("_", " "),
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -116,7 +118,8 @@ fun IngredientSearchCard(
             
             if (category != null) {
                 Text(
-                    text = "Category: ${category.name.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " ")}",
+                    // FIXED: Use proper string case conversion with Locale
+                    text = "Category: ${category.name.lowercase(Locale.getDefault()).replaceFirstChar { it.titlecase(Locale.getDefault()) }.replace("_", " ")}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -231,7 +234,8 @@ fun IngredientSearchCard(
                 }
             } else if (category != null && searchQuery.isEmpty()) {
                 Text(
-                    text = "Start typing to search for ${category.name.lowercase()} ingredients",
+                    // FIXED: Use proper string case conversion with Locale
+                    text = "Start typing to search for ${category.name.lowercase(Locale.getDefault())} ingredients",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -269,7 +273,8 @@ fun IngredientSearchResultItem(
                 // Show current stock if available
                 if (ingredient.currentStock > 0) {
                     Text(
-                        text = "In stock: ${ingredient.currentStock.formatQuantity()} ${ingredient.unit}",
+                        // FIXED: Replace formatQuantity() with String.format()
+                        text = "In stock: ${String.format("%.1f", ingredient.currentStock)} ${ingredient.unit}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
