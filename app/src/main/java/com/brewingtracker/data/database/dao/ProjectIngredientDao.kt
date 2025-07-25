@@ -3,6 +3,7 @@ package com.brewingtracker.data.database.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import com.brewingtracker.data.database.entities.ProjectIngredient
+import com.brewingtracker.data.database.entities.IngredientType
 
 @Dao
 interface ProjectIngredientDao {
@@ -30,17 +31,19 @@ interface ProjectIngredientDao {
     @Delete
     suspend fun deleteProjectIngredient(projectIngredient: ProjectIngredient)
 
+    // FIXED: Added missing method that repository expects
+    @Query("DELETE FROM project_ingredients WHERE id = :projectIngredientId")
+    suspend fun deleteProjectIngredient(projectIngredientId: Int)
+
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId")
     suspend fun deleteAllProjectIngredients(projectId: String)
 
-    // NEW: Alias method for repository compatibility - ADDED
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId")
     suspend fun removeAllIngredientsFromProject(projectId: String)
 
     @Query("DELETE FROM project_ingredients WHERE projectId = :projectId AND ingredientId = :ingredientId")
     suspend fun removeIngredientFromProject(projectId: String, ingredientId: Int)
 
-    // NEW: Update individual ingredient details - ADDED  
     @Query("""
         UPDATE project_ingredients 
         SET quantity = :quantity, 
@@ -57,7 +60,7 @@ interface ProjectIngredientDao {
     )
 }
 
-// Data class for joined query results - must include ALL columns from pi.* selection
+// FIXED: Data class with proper types - ingredientType should be IngredientType enum
 data class ProjectIngredientWithDetails(
     val id: Int,
     val projectId: String,
@@ -66,7 +69,7 @@ data class ProjectIngredientWithDetails(
     val unit: String,
     val additionTime: String?,
     val notes: String?,
-    val createdAt: Long,  // Added missing field from project_ingredients table
+    val createdAt: Long,
     val ingredientName: String,
-    val ingredientType: String
+    val ingredientType: IngredientType  // FIXED: Changed from String to IngredientType
 )
