@@ -1,6 +1,7 @@
 package com.brewingtracker.data.services
 
 import com.brewingtracker.data.database.entities.*
+import com.brewingtracker.data.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -19,21 +20,20 @@ class RecipeCalculationService @Inject constructor() {
     suspend fun calculateRecipeParameters(
         recipeIngredients: List<RecipeIngredientWithDetails>,
         batchSize: BatchSize
-    ): LiveRecipeCalculations = withContext(Dispatchers.Default) {
+    ): RecipeCalculations = withContext(Dispatchers.Default) {
         
         try {
             var totalGravityPoints = 0.0
             val totalVolume = batchSize.ozValue.toDouble() / 128.0 // Convert to gallons
             var totalCost = 0.0
             var totalSRM = 0.0
-            var totalIBU = 0.0
             
             recipeIngredients.forEach { ingredientWithDetails ->
                 val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
                 val ingredient = ingredientWithDetails.ingredient
                 
-                // Calculate cost
-                totalCost += scaledQuantity * (ingredient.costPerUnit ?: 0.0)
+                // Calculate cost (use purchase price if available)
+                totalCost += scaledQuantity * (ingredient.purchasePrice ?: 0.0) / (ingredient.purchaseQuantity ?: 1.0)
                 
                 // Calculate gravity contribution based on ingredient type
                 when (ingredient.type) {
@@ -47,27 +47,45 @@ class RecipeCalculationService @Inject constructor() {
                         totalGravityPoints += gravityPoints
                     }
                     IngredientType.GRAIN -> {
-                        // Use PPG (Points Per Gallon) for grains
-                        ingredient.ppgExtract?.let { ppg ->
-                            val efficiency = 0.75 // 75% efficiency assumed
-                            val gravityPoints = (scaledQuantity * ppg * efficiency) / totalVolume
-                            totalGravityPoints += gravityPoints
-                            
-                            // Calculate SRM contribution (using colorLovibond instead of srmColor)
-                            ingredient.colorLovibond?.let { color ->
-                                val srmContribution = (scaledQuantity * color) / totalVolume
-                                totalSRM += srmContribution
-                            }
+                        // Use estimated PPG for grains (most grains are around 36-38 PPG)
+                        val estimatedPPG = when {
+                            ingredient.name.lowercase().contains("pale malt") -> 37.0
+                            ingredient.name.lowercase().contains("wheat") -> 38.0
+                            ingredient.name.lowercase().contains("munich") -> 35.0
+                            ingredient.name.lowercase().contains("crystal") -> 34.0
+                            ingredient.name.lowercase().contains("caramel") -> 34.0
+                            else -> 36.0 // Default grain PPG
                         }
+                        
+                        val efficiency = 0.75 // 75% efficiency assumed
+                        val gravityPoints = (scaledQuantity * estimatedPPG * efficiency) / totalVolume
+                        totalGravityPoints += gravityPoints
+                        
+                        // Estimate SRM contribution based on grain type
+                        val estimatedSRM = when {
+                            ingredient.name.lowercase().contains("pale") -> 2.0
+                            ingredient.name.lowercase().contains("wheat") -> 2.5
+                            ingredient.name.lowercase().contains("crystal 40") -> 40.0
+                            ingredient.name.lowercase().contains("crystal 60") -> 60.0
+                            ingredient.name.lowercase().contains("crystal 120") -> 120.0
+                            ingredient.name.lowercase().contains("chocolate") -> 350.0
+                            ingredient.name.lowercase().contains("black") -> 500.0
+                            else -> 5.0 // Default grain color
+                        }
+                        val srmContribution = (scaledQuantity * estimatedSRM) / totalVolume
+                        totalSRM += srmContribution
                     }
                     IngredientType.ADJUNCT -> {
                         // Handle adjunct sugars
-                        ingredient.ppgExtract?.let { ppg ->
-                            val gravityPoints = (scaledQuantity * ppg) / totalVolume
-                            totalGravityPoints += gravityPoints
+                        val estimatedPPG = when {
+                            ingredient.name.lowercase().contains("sugar") -> 46.0
+                            ingredient.name.lowercase().contains("honey") -> 35.0
+                            ingredient.name.lowercase().contains("corn") -> 37.0
+                            else -> 35.0 // Default adjunct PPG
                         }
+                        val gravityPoints = (scaledQuantity * estimatedPPG) / totalVolume
+                        totalGravityPoints += gravityPoints
                     }
-                    // Removed HOPS case since IngredientType.HOPS doesn't exist
                     else -> {
                         // Non-fermentable ingredients don't contribute to gravity
                     }
@@ -78,24 +96,19 @@ class RecipeCalculationService @Inject constructor() {
             val estimatedFG = calculateFinalGravity(estimatedOG)
             val estimatedABV = calculateABV(estimatedOG, estimatedFG)
             
-            LiveRecipeCalculations(
+            RecipeCalculations(
                 estimatedOG = estimatedOG,
                 estimatedFG = estimatedFG,
                 estimatedABV = estimatedABV,
-                estimatedSRM = totalSRM,
-                estimatedIBU = totalIBU,
-                batchSize = batchSize,
-                totalCost = totalCost,
-                isCalculating = false,
-                hasError = false
+                batchSize = batchSize
             )
             
         } catch (e: Exception) {
-            LiveRecipeCalculations(
-                batchSize = batchSize,
-                isCalculating = false,
-                hasError = true,
-                errorMessage = "Calculation error: ${e.message}"
+            RecipeCalculations(
+                estimatedOG = 1.000,
+                estimatedFG = 1.000,
+                estimatedABV = 0.0,
+                batchSize = batchSize
             )
         }
     }
@@ -197,7 +210,7 @@ class RecipeCalculationService @Inject constructor() {
         
         recipeIngredients.forEach { ingredientWithDetails ->
             val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
-            val cost = scaledQuantity * (ingredientWithDetails.ingredient.costPerUnit ?: 0.0)
+            val cost = scaledQuantity * (ingredientWithDetails.ingredient.purchasePrice ?: 0.0) / (ingredientWithDetails.ingredient.purchaseQuantity ?: 1.0)
             val type = ingredientWithDetails.ingredient.type
             
             costByType[type] = (costByType[type] ?: 0.0) + cost
