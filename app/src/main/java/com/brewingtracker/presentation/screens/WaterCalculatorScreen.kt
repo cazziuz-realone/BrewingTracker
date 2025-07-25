@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brewingtracker.presentation.viewmodel.CalculatorViewModel
-import com.brewingtracker.presentation.viewmodel.WaterCalculatorState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,8 +27,48 @@ fun WaterCalculatorScreen(
     onNavigateBack: () -> Unit,
     viewModel: CalculatorViewModel = hiltViewModel()
 ) {
-    val waterState by viewModel.waterState.collectAsStateWithLifecycle(initialValue = WaterCalculatorState())
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+
+    // Local state for input fields
+    var grainWeightText by remember { mutableStateOf("") }
+    var mashRatioText by remember { mutableStateOf("") }
+    var totalWaterText by remember { mutableStateOf("") }
+    var grainAbsorptionText by remember { mutableStateOf("0.125") }
+    var boilOffRateText by remember { mutableStateOf("1.25") }
+    var boilTimeText by remember { mutableStateOf("1.0") }
+    var grainTempText by remember { mutableStateOf("") }
+    var targetMashTempText by remember { mutableStateOf("") }
+    
+    // Calculate water amounts when input fields are valid
+    LaunchedEffect(grainWeightText, mashRatioText, totalWaterText, grainAbsorptionText, boilOffRateText, boilTimeText) {
+        val grainWeight = grainWeightText.toDoubleOrNull()
+        val mashRatio = mashRatioText.toDoubleOrNull()
+        val totalWater = totalWaterText.toDoubleOrNull()
+        val grainAbsorption = grainAbsorptionText.toDoubleOrNull()
+        val boilOffRate = boilOffRateText.toDoubleOrNull()
+        val boilTime = boilTimeText.toDoubleOrNull()
+        
+        if (grainWeight != null && grainWeight > 0 &&
+            mashRatio != null && mashRatio > 0 &&
+            totalWater != null && totalWater > 0 &&
+            grainAbsorption != null && grainAbsorption > 0 &&
+            boilOffRate != null && boilOffRate > 0 &&
+            boilTime != null && boilTime > 0) {
+            viewModel.calculateWaterAmounts(grainWeight, mashRatio, totalWater, grainAbsorption, boilOffRate, boilTime)
+        }
+    }
+    
+    // Calculate strike temperature when input fields are valid
+    LaunchedEffect(grainTempText, targetMashTempText, mashRatioText) {
+        val grainTemp = grainTempText.toDoubleOrNull()
+        val targetMashTemp = targetMashTempText.toDoubleOrNull()
+        val mashRatio = mashRatioText.toDoubleOrNull() ?: 1.25
+        
+        if (grainTemp != null && targetMashTemp != null && targetMashTemp > grainTemp) {
+            viewModel.calculateStrikeTemperature(grainTemp, targetMashTemp, mashRatio)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -44,7 +83,17 @@ fun WaterCalculatorScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::resetWaterCalculator) {
+                    IconButton(onClick = { 
+                        grainWeightText = ""
+                        mashRatioText = ""
+                        totalWaterText = ""
+                        grainAbsorptionText = "0.125"
+                        boilOffRateText = "1.25"
+                        boilTimeText = "1.0"
+                        grainTempText = ""
+                        targetMashTempText = ""
+                        viewModel.clearWaterResults() 
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Reset"
@@ -100,36 +149,39 @@ fun WaterCalculatorScreen(
                     )
 
                     OutlinedTextField(
-                        value = waterState.grainWeight,
-                        onValueChange = viewModel::updateGrainWeight,
+                        value = grainWeightText,
+                        onValueChange = { grainWeightText = it },
                         label = { Text("Grain Weight") },
                         placeholder = { Text("10.0") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         supportingText = { Text("Total grain weight in pounds") },
-                        trailingIcon = { Text("lbs", style = MaterialTheme.typography.bodySmall) }
+                        trailingIcon = { Text("lbs", style = MaterialTheme.typography.bodySmall) },
+                        isError = grainWeightText.isNotBlank() && grainWeightText.toDoubleOrNull() == null
                     )
 
                     OutlinedTextField(
-                        value = waterState.mashRatio,
-                        onValueChange = viewModel::updateMashRatio,
+                        value = mashRatioText,
+                        onValueChange = { mashRatioText = it },
                         label = { Text("Mash Ratio") },
                         placeholder = { Text("1.25") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         supportingText = { Text("Quarts of water per pound of grain (1.25-1.5)") },
-                        trailingIcon = { Text("qt/lb", style = MaterialTheme.typography.bodySmall) }
+                        trailingIcon = { Text("qt/lb", style = MaterialTheme.typography.bodySmall) },
+                        isError = mashRatioText.isNotBlank() && mashRatioText.toDoubleOrNull() == null
                     )
 
                     OutlinedTextField(
-                        value = waterState.totalWater,
-                        onValueChange = viewModel::updateTotalWater,
+                        value = totalWaterText,
+                        onValueChange = { totalWaterText = it },
                         label = { Text("Total Water Needed") },
                         placeholder = { Text("7.5") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         supportingText = { Text("Total water for your batch size + losses") },
-                        trailingIcon = { Text("gal", style = MaterialTheme.typography.bodySmall) }
+                        trailingIcon = { Text("gal", style = MaterialTheme.typography.bodySmall) },
+                        isError = totalWaterText.isNotBlank() && totalWaterText.toDoubleOrNull() == null
                     )
                 }
             }
@@ -151,41 +203,44 @@ fun WaterCalculatorScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedTextField(
-                            value = waterState.grainAbsorption,
-                            onValueChange = viewModel::updateGrainAbsorption,
+                            value = grainAbsorptionText,
+                            onValueChange = { grainAbsorptionText = it },
                             label = { Text("Grain Absorption") },
                             placeholder = { Text("0.125") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            supportingText = { Text("gal/lb") }
+                            supportingText = { Text("gal/lb") },
+                            isError = grainAbsorptionText.isNotBlank() && grainAbsorptionText.toDoubleOrNull() == null
                         )
 
                         OutlinedTextField(
-                            value = waterState.boilOffRate,
-                            onValueChange = viewModel::updateBoilOffRate,
+                            value = boilOffRateText,
+                            onValueChange = { boilOffRateText = it },
                             label = { Text("Boil-off Rate") },
                             placeholder = { Text("1.25") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            supportingText = { Text("gal/hr") }
+                            supportingText = { Text("gal/hr") },
+                            isError = boilOffRateText.isNotBlank() && boilOffRateText.toDoubleOrNull() == null
                         )
                     }
 
                     OutlinedTextField(
-                        value = waterState.boilTime,
-                        onValueChange = viewModel::updateWaterBoilTime, // FIXED: Updated method call
+                        value = boilTimeText,
+                        onValueChange = { boilTimeText = it },
                         label = { Text("Boil Time") },
                         placeholder = { Text("1.0") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         supportingText = { Text("Boil time in hours") },
-                        trailingIcon = { Text("hrs", style = MaterialTheme.typography.bodySmall) }
+                        trailingIcon = { Text("hrs", style = MaterialTheme.typography.bodySmall) },
+                        isError = boilTimeText.isNotBlank() && boilTimeText.toDoubleOrNull() == null
                     )
                 }
             }
 
             // Water Amounts Results
-            if (waterState.calculatedMashWater != null) {
+            uiState.waterResult?.let { waterResult ->
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -227,7 +282,7 @@ fun WaterCalculatorScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "${String.format("%.2f", waterState.calculatedMashWater)} qt",
+                                text = "${String.format("%.2f", waterResult.calculatedMashWater)} qt",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -235,28 +290,25 @@ fun WaterCalculatorScreen(
                         }
 
                         // Sparge Water
-                        waterState.calculatedSpargeWater?.let { spargeWater ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Sparge Water:",
-                                    fontSize = 16.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = "${String.format("%.2f", spargeWater)} gal",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Sparge Water:",
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "${String.format("%.2f", waterResult.calculatedSpargeWater)} gal",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
 
                         // Total Water Summary
-                        val totalWater = waterState.calculatedMashWater!! / 4.0 + (waterState.calculatedSpargeWater ?: 0.0)
                         HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -270,7 +322,7 @@ fun WaterCalculatorScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "${String.format("%.2f", totalWater)} gal",
+                                text = "${String.format("%.2f", waterResult.totalCalculatedWater)} gal",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -308,28 +360,30 @@ fun WaterCalculatorScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedTextField(
-                            value = waterState.grainTemp,
-                            onValueChange = viewModel::updateGrainTemp,
+                            value = grainTempText,
+                            onValueChange = { grainTempText = it },
                             label = { Text("Grain Temp") },
                             placeholder = { Text("68") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            supportingText = { Text("°F") }
+                            supportingText = { Text("°F") },
+                            isError = grainTempText.isNotBlank() && grainTempText.toDoubleOrNull() == null
                         )
 
                         OutlinedTextField(
-                            value = waterState.targetMashTemp,
-                            onValueChange = viewModel::updateTargetMashTemp,
+                            value = targetMashTempText,
+                            onValueChange = { targetMashTempText = it },
                             label = { Text("Target Mash Temp") },
                             placeholder = { Text("152") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            supportingText = { Text("°F") }
+                            supportingText = { Text("°F") },
+                            isError = targetMashTempText.isNotBlank() && targetMashTempText.toDoubleOrNull() == null
                         )
                     }
 
                     // Strike Temperature Result
-                    waterState.calculatedStrikeTemp?.let { strikeTemp ->
+                    uiState.strikeTemperatureResult?.let { strikeResult ->
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -348,7 +402,7 @@ fun WaterCalculatorScreen(
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 Text(
-                                    text = "${String.format("%.1f", strikeTemp)}°F",
+                                    text = "${String.format("%.1f", strikeResult.calculatedStrikeTemp)}°F",
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -397,14 +451,38 @@ fun WaterCalculatorScreen(
             }
 
             // Error handling
-            if (!waterState.isValid && waterState.grainWeight.isNotBlank()) {
+            uiState.error?.let { error ->
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
                     Text(
-                        text = "⚠️ Please enter valid values. Grain weight must be greater than 0, " +
+                        text = "⚠️ $error",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            // Input validation errors
+            val hasInputErrors = (grainWeightText.isNotBlank() && grainWeightText.toDoubleOrNull() == null) ||
+                    (mashRatioText.isNotBlank() && mashRatioText.toDoubleOrNull() == null) ||
+                    (totalWaterText.isNotBlank() && totalWaterText.toDoubleOrNull() == null) ||
+                    (grainAbsorptionText.isNotBlank() && grainAbsorptionText.toDoubleOrNull() == null) ||
+                    (boilOffRateText.isNotBlank() && boilOffRateText.toDoubleOrNull() == null) ||
+                    (boilTimeText.isNotBlank() && boilTimeText.toDoubleOrNull() == null) ||
+                    (grainTempText.isNotBlank() && grainTempText.toDoubleOrNull() == null) ||
+                    (targetMashTempText.isNotBlank() && targetMashTempText.toDoubleOrNull() == null)
+
+            if (hasInputErrors) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = "⚠️ Please enter valid values. All values must be numbers greater than 0, " +
                                 "and mash ratio should be between 1.0-2.0 qt/lb.",
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer
