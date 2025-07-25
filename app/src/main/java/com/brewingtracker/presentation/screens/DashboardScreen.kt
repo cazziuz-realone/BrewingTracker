@@ -305,6 +305,7 @@ fun RecentProjectCard(
             Spacer(modifier = Modifier.height(6.dp))
             
             Text(
+                // FIXED: Use displayName property from enum
                 text = project.currentPhase.displayName,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
