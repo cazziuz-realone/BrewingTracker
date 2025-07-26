@@ -8,21 +8,20 @@ import kotlinx.coroutines.launch
 import com.brewingtracker.data.database.entities.Project
 import com.brewingtracker.data.database.entities.BeverageType
 import com.brewingtracker.data.database.entities.ProjectPhase
-import com.brewingtracker.data.database.dao.ProjectDao
 import com.brewingtracker.data.repository.BrewingRepository
 import javax.inject.Inject
 import java.util.*
 
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
-    private val projectDao: ProjectDao,
     private val repository: BrewingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProjectUiState())
     val uiState: StateFlow<ProjectUiState> = _uiState.asStateFlow()
 
-    val allProjects = projectDao.getAllActiveProjects()
+    // FIXED: Use repository instead of DAO directly - this is the proper architecture pattern
+    val allProjects = repository.getAllProjects()
 
     fun createProject(
         name: String,
@@ -30,7 +29,7 @@ class ProjectViewModel @Inject constructor(
         targetOG: Double? = null,
         targetFG: Double? = null,
         targetABV: Double? = null,
-        batchSize: Double? = 5.0, // FIXED: Make nullable to match entity
+        batchSize: Double? = 5.0,
         notes: String? = null
     ) {
         viewModelScope.launch {
@@ -50,7 +49,7 @@ class ProjectViewModel @Inject constructor(
                 startDate = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis()
             )
-            projectDao.insertProject(project)
+            repository.createProject(project)
             _uiState.value = _uiState.value.copy(
                 showSuccess = true,
                 successMessage = "Project '$name' created successfully!"
@@ -60,13 +59,13 @@ class ProjectViewModel @Inject constructor(
 
     fun updateProject(project: Project) {
         viewModelScope.launch {
-            projectDao.updateProject(project)
+            repository.updateProject(project)
         }
     }
 
     fun updateProjectPhase(projectId: String, phase: ProjectPhase) {
         viewModelScope.launch {
-            projectDao.updateProjectPhase(projectId, phase, System.currentTimeMillis())
+            repository.updateProjectPhase(projectId, phase)
         }
     }
 
@@ -80,7 +79,7 @@ class ProjectViewModel @Inject constructor(
                 repository.removeAllIngredientsFromProject(projectId)
                 
                 // Then delete the project
-                projectDao.deleteProject(projectId)
+                repository.deleteProject(projectId)
                 
                 _uiState.value = _uiState.value.copy(
                     showSuccess = true,
