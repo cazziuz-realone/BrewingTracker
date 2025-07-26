@@ -112,15 +112,19 @@ class RecipeCalculationService @Inject constructor() {
     
     /**
      * Generate default process steps based on beverage type
+     * Note: These are templates - the actual RecipeStep entities need a recipeId
      */
     fun generateDefaultSteps(beverageType: BeverageType): List<RecipeStep> {
+        // We'll use a placeholder recipeId that should be replaced when saving
+        val placeholderRecipeId = "PLACEHOLDER"
+        
         return when (beverageType) {
-            BeverageType.MEAD -> generateMeadSteps()
-            BeverageType.BEER -> generateBeerSteps()
-            BeverageType.WINE -> generateWineSteps()
-            BeverageType.CIDER -> generateCiderSteps()
-            BeverageType.KOMBUCHA -> generateKombuchaSteps()
-            BeverageType.OTHER -> generateGenericSteps()
+            BeverageType.MEAD -> generateMeadSteps(placeholderRecipeId)
+            BeverageType.BEER -> generateBeerSteps(placeholderRecipeId)
+            BeverageType.WINE -> generateWineSteps(placeholderRecipeId)
+            BeverageType.CIDER -> generateCiderSteps(placeholderRecipeId)
+            BeverageType.KOMBUCHA -> generateKombuchaSteps(placeholderRecipeId)
+            else -> generateGenericSteps(placeholderRecipeId)
         }
     }
     
@@ -177,9 +181,10 @@ class RecipeCalculationService @Inject constructor() {
         }
     }
     
-    private fun generateMeadSteps(): List<RecipeStep> {
+    private fun generateMeadSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Sanitize Equipment",
@@ -187,6 +192,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "preparation",
                 title = "Prepare Honey Must",
@@ -194,6 +200,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "45 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "primary",
                 title = "Pitch Yeast",
@@ -201,6 +208,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "15 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "primary",
                 title = "Primary Fermentation",
@@ -208,6 +216,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "2-4 weeks"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 5,
                 phase = "secondary",
                 title = "Rack to Secondary",
@@ -215,6 +224,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 6,
                 phase = "aging",
                 title = "Age and Clear",
@@ -222,6 +232,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "2-6 months"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 7,
                 phase = "bottling",
                 title = "Bottle",
@@ -231,9 +242,10 @@ class RecipeCalculationService @Inject constructor() {
         )
     }
     
-    private fun generateBeerSteps(): List<RecipeStep> {
+    private fun generateBeerSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Mash Grains",
@@ -241,6 +253,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "60 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "preparation",
                 title = "Boil Wort",
@@ -248,6 +261,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "60 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "primary",
                 title = "Cool and Pitch",
@@ -255,6 +269,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "primary",
                 title = "Primary Fermentation",
@@ -262,6 +277,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1-2 weeks"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 5,
                 phase = "bottling",
                 title = "Package",
@@ -271,9 +287,10 @@ class RecipeCalculationService @Inject constructor() {
         )
     }
     
-    private fun generateWineSteps(): List<RecipeStep> {
+    private fun generateWineSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Prepare Must",
@@ -281,6 +298,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1 hour"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "primary",
                 title = "Primary Fermentation",
@@ -288,6 +306,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1-2 weeks"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "secondary",
                 title = "Press and Secondary",
@@ -295,6 +314,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "2 hours"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "aging",
                 title = "Age",
@@ -302,6 +322,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "3-12 months"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 5,
                 phase = "bottling",
                 title = "Bottle",
@@ -311,9 +332,10 @@ class RecipeCalculationService @Inject constructor() {
         )
     }
     
-    private fun generateCiderSteps(): List<RecipeStep> {
+    private fun generateCiderSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Prepare Juice",
@@ -321,6 +343,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1-2 hours"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "primary",
                 title = "Pitch Yeast",
@@ -328,6 +351,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "15 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "primary",
                 title = "Primary Fermentation",
@@ -335,6 +359,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "2-4 weeks"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "secondary",
                 title = "Secondary",
@@ -342,6 +367,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 5,
                 phase = "bottling",
                 title = "Package",
@@ -351,9 +377,10 @@ class RecipeCalculationService @Inject constructor() {
         )
     }
     
-    private fun generateKombuchaSteps(): List<RecipeStep> {
+    private fun generateKombuchaSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Brew Tea",
@@ -361,6 +388,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "primary",
                 title = "Add SCOBY",
@@ -368,6 +396,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "15 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "primary",
                 title = "First Fermentation",
@@ -375,6 +404,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "7-14 days"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "secondary",
                 title = "Second Fermentation",
@@ -384,9 +414,10 @@ class RecipeCalculationService @Inject constructor() {
         )
     }
     
-    private fun generateGenericSteps(): List<RecipeStep> {
+    private fun generateGenericSteps(recipeId: String): List<RecipeStep> {
         return listOf(
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 1,
                 phase = "preparation",
                 title = "Prepare Ingredients",
@@ -394,6 +425,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1 hour"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 2,
                 phase = "primary",
                 title = "Primary Fermentation",
@@ -401,6 +433,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "1-4 weeks"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 3,
                 phase = "secondary",
                 title = "Secondary",
@@ -408,6 +441,7 @@ class RecipeCalculationService @Inject constructor() {
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
+                recipeId = recipeId,
                 stepNumber = 4,
                 phase = "bottling",
                 title = "Package",
