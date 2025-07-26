@@ -51,6 +51,7 @@ interface IngredientDao {
     @Query("DELETE FROM ingredients WHERE id = :ingredientId")
     suspend fun deleteIngredient(ingredientId: Int)
 
+    // FIXED: Added default timestamp parameter to match repository calls
     @Query("UPDATE ingredients SET currentStock = :stock, updatedAt = :timestamp WHERE id = :ingredientId")
     suspend fun updateStock(ingredientId: Int, stock: Double, timestamp: Long = System.currentTimeMillis())
 }
