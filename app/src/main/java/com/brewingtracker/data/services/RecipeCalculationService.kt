@@ -32,8 +32,8 @@ class RecipeCalculationService @Inject constructor() {
                 val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
                 val ingredient = ingredientWithDetails.ingredient
                 
-                // Calculate cost (use purchase price if available)
-                totalCost += scaledQuantity * (ingredient.purchasePrice ?: 0.0) / (ingredient.purchaseQuantity ?: 1.0)
+                // Calculate cost (use costPerUnit if available) - FIXED
+                totalCost += scaledQuantity * (ingredient.costPerUnit ?: 0.0)
                 
                 // Calculate gravity contribution based on ingredient type
                 when (ingredient.type) {
@@ -210,7 +210,7 @@ class RecipeCalculationService @Inject constructor() {
         
         recipeIngredients.forEach { ingredientWithDetails ->
             val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
-            val cost = scaledQuantity * (ingredientWithDetails.ingredient.purchasePrice ?: 0.0) / (ingredientWithDetails.ingredient.purchaseQuantity ?: 1.0)
+            val cost = scaledQuantity * (ingredientWithDetails.ingredient.costPerUnit ?: 0.0)
             val type = ingredientWithDetails.ingredient.type
             
             costByType[type] = (costByType[type] ?: 0.0) + cost
