@@ -83,8 +83,9 @@ class BrewingRepository @Inject constructor(
         }
     }
     
+    // FIXED: Added explicit timestamp parameter to match DAO signature
     suspend fun updateIngredientStock(ingredientId: Int, newStock: Double) = 
-        ingredientDao.updateStock(ingredientId, newStock)
+        ingredientDao.updateStock(ingredientId, newStock, System.currentTimeMillis())
     
     // === YEAST OPERATIONS ===
     suspend fun addYeast(yeast: Yeast): Long = yeastDao.insertYeast(yeast)
