@@ -6,14 +6,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.brewingtracker.data.database.entities.*
-import com.brewingtracker.data.database.dao.RecipeDao
-import com.brewingtracker.data.database.dao.RecipeIngredientDao
+import com.brewingtracker.data.repository.BrewingRepository
+import com.brewingtracker.data.models.*
 import javax.inject.Inject
 
 @HiltViewModel
 class RecipeBuilderViewModel @Inject constructor(
-    private val recipeDao: RecipeDao,
-    private val recipeIngredientDao: RecipeIngredientDao
+    private val repository: BrewingRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(LegacyRecipeBuilderUiState())
@@ -40,7 +39,7 @@ class RecipeBuilderViewModel @Inject constructor(
     fun loadRecipe(recipeId: String) {
         viewModelScope.launch {
             try {
-                val recipe = recipeDao.getRecipeById(recipeId)
+                val recipe = repository.getRecipeById(recipeId)
                 if (recipe != null) {
                     _uiState.value = _uiState.value.copy(
                         recipe = recipe,
@@ -58,21 +57,23 @@ class RecipeBuilderViewModel @Inject constructor(
         }
     }
     
-    private suspend fun loadRecipeIngredients(recipeId: String) {
-        try {
-            // Use the proper Flow-based method for getting ingredients with details
-            recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
-                .collect { ingredientsWithDetails ->
-                    _uiState.value = _uiState.value.copy(
-                        recipeIngredients = ingredientsWithDetails
-                    )
-                    calculateRecipe()
-                    checkInventoryStatus()
-                }
-        } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
-                validation = _uiState.value.validation + "Error loading ingredients: ${e.message}"
-            )
+    private fun loadRecipeIngredients(recipeId: String) {
+        viewModelScope.launch {
+            try {
+                // Use repository method instead of direct DAO access
+                repository.getRecipeIngredientsWithDetails(recipeId)
+                    .collect { ingredientsWithDetails ->
+                        _uiState.value = _uiState.value.copy(
+                            recipeIngredients = ingredientsWithDetails
+                        )
+                        calculateRecipe()
+                        checkInventoryStatus()
+                    }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    validation = _uiState.value.validation + "Error loading ingredients: ${e.message}"
+                )
+            }
         }
     }
     
@@ -103,7 +104,8 @@ class RecipeBuilderViewModel @Inject constructor(
     private fun searchIngredients(category: IngredientType, query: String) {
         viewModelScope.launch {
             try {
-                val results = recipeIngredientDao.searchIngredientsByTypeAndName(category, query)
+                // FIXED: Use repository method instead of DAO
+                val results = repository.searchIngredients(query, category)
                 _uiState.value = _uiState.value.copy(searchResults = results)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(searchResults = emptyList())
@@ -114,8 +116,10 @@ class RecipeBuilderViewModel @Inject constructor(
     private fun loadIngredientsByCategory(category: IngredientType) {
         viewModelScope.launch {
             try {
-                val results = recipeIngredientDao.getIngredientsByType(category)
-                _uiState.value = _uiState.value.copy(searchResults = results)
+                // FIXED: Use repository method instead of DAO
+                repository.getIngredientsByType(category).first().let { results ->
+                    _uiState.value = _uiState.value.copy(searchResults = results)
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(searchResults = emptyList())
             }
@@ -139,24 +143,17 @@ class RecipeBuilderViewModel @Inject constructor(
                 // CRITICAL FIX: Always ensure recipe exists in database first
                 val savedRecipeId = if (_uiState.value.isEditing) {
                     // Recipe already exists, just update it
-                    recipeDao.updateRecipe(currentRecipe)
+                    repository.updateRecipe(currentRecipe)
                     currentRecipe.id
                 } else {
                     // NEW RECIPE: Must insert recipe first before adding ingredients
                     try {
-                        recipeDao.insertRecipe(currentRecipe)
+                        val recipeId = repository.createRecipe(currentRecipe)
                         // Mark as editing now that it's saved
                         _uiState.value = _uiState.value.copy(isEditing = true)
-                        currentRecipe.id
+                        recipeId
                     } catch (e: Exception) {
-                        // If insert fails, the recipe might already exist, try to get it
-                        val existingRecipe = recipeDao.getRecipeById(currentRecipe.id)
-                        if (existingRecipe != null) {
-                            _uiState.value = _uiState.value.copy(isEditing = true)
-                            existingRecipe.id
-                        } else {
-                            throw e
-                        }
+                        throw e
                     }
                 }
                 
@@ -170,7 +167,7 @@ class RecipeBuilderViewModel @Inject constructor(
                 )
                 
                 // Insert the recipe ingredient
-                recipeIngredientDao.insertRecipeIngredient(recipeIngredient)
+                repository.insertRecipeIngredient(recipeIngredient)
                 
                 // Reload recipe ingredients to update UI
                 loadRecipeIngredients(savedRecipeId)
@@ -202,7 +199,7 @@ class RecipeBuilderViewModel @Inject constructor(
     fun removeIngredient(ingredientId: Int) {
         viewModelScope.launch {
             try {
-                recipeIngredientDao.deleteRecipeIngredientById(ingredientId)
+                repository.deleteRecipeIngredient(ingredientId)
                 // Reload recipe ingredients
                 if (_uiState.value.isEditing) {
                     loadRecipeIngredients(_uiState.value.recipe.id)
@@ -218,7 +215,7 @@ class RecipeBuilderViewModel @Inject constructor(
     fun updateIngredient(updatedIngredient: RecipeIngredient) {
         viewModelScope.launch {
             try {
-                recipeIngredientDao.updateRecipeIngredient(updatedIngredient)
+                repository.updateRecipeIngredient(updatedIngredient)
                 // Reload recipe ingredients
                 if (_uiState.value.isEditing) {
                     loadRecipeIngredients(_uiState.value.recipe.id)
@@ -289,7 +286,8 @@ class RecipeBuilderViewModel @Inject constructor(
                 val calculations = RecipeCalculations(
                     estimatedOG = estimatedOG,
                     estimatedFG = estimatedFG,
-                    estimatedABV = estimatedABV
+                    estimatedABV = estimatedABV,
+                    batchSize = batchSize
                 )
                 
                 _uiState.value = _uiState.value.copy(
@@ -345,9 +343,9 @@ class RecipeBuilderViewModel @Inject constructor(
                 }
                 
                 if (_uiState.value.isEditing) {
-                    recipeDao.updateRecipe(recipe)
+                    repository.updateRecipe(recipe)
                 } else {
-                    recipeDao.insertRecipe(recipe)
+                    repository.createRecipe(recipe)
                     _uiState.value = _uiState.value.copy(isEditing = true)
                 }
                 
