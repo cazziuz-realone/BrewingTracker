@@ -263,16 +263,19 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                     saveRecipe()
                 }
 
-                // Create project from recipe
+                // Create project from recipe  
                 val project = Project(
+                    id = java.util.UUID.randomUUID().toString(),
                     name = "${currentState.recipe.name} - ${batchSize.displayName}",
                     description = "Brewing project from recipe: ${currentState.recipe.name}",
-                    type = currentState.recipe.beverageType,  // Fixed: Use 'type' field
+                    type = currentState.recipe.beverageType,
+                    startDate = System.currentTimeMillis(),
+                    currentPhase = ProjectPhase.PLANNING,
                     targetOG = currentState.calculations.estimatedOG,
                     targetFG = currentState.calculations.estimatedFG,
                     targetABV = currentState.calculations.estimatedABV,
-                    batchSizeOz = batchSize.ozValue,
-                    recipeId = currentState.recipe.id
+                    batchSize = batchSize.ozValue / 128.0, // Convert oz to gallons
+                    batchUnit = "gallons"
                 )
 
                 val projectId = repository.createProject(project)
@@ -284,9 +287,9 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                     val projectIngredient = ProjectIngredient(
                         projectId = projectId,
                         ingredientId = ingredientWithDetails.ingredient.id,
-                        quantity = scaledQuantity,  // Fixed: Use 'quantity' field instead of 'plannedQuantity'
+                        quantity = scaledQuantity,
                         unit = ingredientWithDetails.recipeIngredient.baseUnit,
-                        additionTime = ingredientWithDetails.recipeIngredient.additionTiming  // Fixed: Use 'additionTime' field
+                        additionTime = ingredientWithDetails.recipeIngredient.additionTiming
                     )
                     
                     repository.addIngredientToProject(projectIngredient)
