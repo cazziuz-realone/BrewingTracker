@@ -23,7 +23,9 @@ class ProjectsViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    val allProjects = repository.getAllActiveProjects()
+    // FIXED: Use getAllProjects() which exists in BrewingRepository
+    val allProjects = repository.getAllProjects()
+        .map { projects -> projects.filter { it.isActive } } // Filter active projects in-memory
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
