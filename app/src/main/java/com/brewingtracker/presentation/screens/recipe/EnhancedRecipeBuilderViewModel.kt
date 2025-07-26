@@ -267,7 +267,7 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                 val project = Project(
                     name = "${currentState.recipe.name} - ${batchSize.displayName}",
                     description = "Brewing project from recipe: ${currentState.recipe.name}",
-                    beverageType = currentState.recipe.beverageType,
+                    type = currentState.recipe.beverageType,  // Fixed: Use 'type' field
                     targetOG = currentState.calculations.estimatedOG,
                     targetFG = currentState.calculations.estimatedFG,
                     targetABV = currentState.calculations.estimatedABV,
@@ -284,9 +284,9 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                     val projectIngredient = ProjectIngredient(
                         projectId = projectId,
                         ingredientId = ingredientWithDetails.ingredient.id,
-                        plannedQuantity = scaledQuantity,
+                        quantity = scaledQuantity,  // Fixed: Use 'quantity' field instead of 'plannedQuantity'
                         unit = ingredientWithDetails.recipeIngredient.baseUnit,
-                        additionTiming = ingredientWithDetails.recipeIngredient.additionTiming
+                        additionTime = ingredientWithDetails.recipeIngredient.additionTiming  // Fixed: Use 'additionTime' field
                     )
                     
                     repository.addIngredientToProject(projectIngredient)
