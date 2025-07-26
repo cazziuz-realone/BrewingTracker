@@ -170,8 +170,9 @@ class BrewingRepository @Inject constructor(
     suspend fun deleteRecipeIngredient(recipeIngredientId: Int) = 
         recipeIngredientDao.deleteRecipeIngredientById(recipeIngredientId)
     
+    // FIXED: Use correct DAO method name
     suspend fun getRecipeIngredients(recipeId: String): List<RecipeIngredient> = 
-        recipeIngredientDao.getRecipeIngredientsList(recipeId)
+        recipeIngredientDao.getRecipeIngredientsSync(recipeId)
     
     fun getRecipeIngredientsFlow(recipeId: String): Flow<List<RecipeIngredient>> = 
         recipeIngredientDao.getRecipeIngredients(recipeId)
