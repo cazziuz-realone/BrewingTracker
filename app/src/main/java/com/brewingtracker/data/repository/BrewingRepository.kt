@@ -37,6 +37,9 @@ class BrewingRepository @Inject constructor(
     // FIXED: Method name now matches ProjectDao
     fun getAllProjects(): Flow<List<Project>> = projectDao.getAllProjects()
     
+    // FIXED: Added alias method for getProjects() calls
+    fun getProjects(): Flow<List<Project>> = getAllProjects()
+    
     // ADDED: Method for ProjectsViewModel  
     fun getFavoriteProjects(): Flow<List<Project>> = projectDao.getFavoriteProjects()
     
@@ -55,7 +58,7 @@ class BrewingRepository @Inject constructor(
         projectDao.updateProjectCompletion(projectId, isCompleted, System.currentTimeMillis())
     
     // === INGREDIENT OPERATIONS ===
-    suspend fun addIngredient(ingredient: Ingredient) = ingredientDao.insertIngredient(ingredient)
+    suspend fun addIngredient(ingredient: Ingredient): Long = ingredientDao.insertIngredient(ingredient)
     
     suspend fun updateIngredient(ingredient: Ingredient) = ingredientDao.updateIngredient(ingredient)
     
@@ -86,7 +89,7 @@ class BrewingRepository @Inject constructor(
         ingredientDao.updateStock(ingredientId, newStock)
     
     // === YEAST OPERATIONS ===
-    suspend fun addYeast(yeast: Yeast) = yeastDao.insertYeast(yeast)
+    suspend fun addYeast(yeast: Yeast): Long = yeastDao.insertYeast(yeast)
     
     suspend fun updateYeast(yeast: Yeast) = yeastDao.updateYeast(yeast)
     
@@ -99,7 +102,7 @@ class BrewingRepository @Inject constructor(
     fun getYeastsByType(type: YeastType): Flow<List<Yeast>> = yeastDao.getYeastsByType(type)
     
     // === PROJECT INGREDIENT OPERATIONS ===
-    suspend fun addIngredientToProject(projectIngredient: ProjectIngredient) = 
+    suspend fun addIngredientToProject(projectIngredient: ProjectIngredient): Long = 
         projectIngredientDao.insertProjectIngredient(projectIngredient)
     
     suspend fun updateProjectIngredient(projectIngredient: ProjectIngredient) = 
@@ -167,7 +170,10 @@ class BrewingRepository @Inject constructor(
     suspend fun deleteRecipeIngredient(recipeIngredientId: Int) = 
         recipeIngredientDao.deleteRecipeIngredientById(recipeIngredientId)
     
-    fun getRecipeIngredients(recipeId: String): Flow<List<RecipeIngredient>> = 
+    suspend fun getRecipeIngredients(recipeId: String): List<RecipeIngredient> = 
+        recipeIngredientDao.getRecipeIngredientsList(recipeId)
+    
+    fun getRecipeIngredientsFlow(recipeId: String): Flow<List<RecipeIngredient>> = 
         recipeIngredientDao.getRecipeIngredients(recipeId)
     
     // FIXED: Map Room entities to model entities
