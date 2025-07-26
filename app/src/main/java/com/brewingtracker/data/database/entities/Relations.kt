@@ -1,10 +1,10 @@
 package com.brewingtracker.data.database.entities
 
 import androidx.room.*
-import com.brewingtracker.data.models.*
 
 /**
  * Room relation entities for complex queries
+ * These are used by Room's @Transaction queries
  */
 
 /**
