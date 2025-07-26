@@ -2,163 +2,66 @@ package com.brewingtracker.data.services
 
 import com.brewingtracker.data.database.entities.*
 import com.brewingtracker.data.models.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.sqrt
 
+/**
+ * Service for calculating recipe parameters and validating recipes
+ */
 @Singleton
 class RecipeCalculationService @Inject constructor() {
-    
+
     /**
-     * Calculate comprehensive recipe parameters for a given batch size
+     * Calculate estimated OG, FG, ABV for a recipe at given batch size
      */
-    suspend fun calculateRecipeParameters(
+    fun calculateRecipeParameters(
         recipeIngredients: List<RecipeIngredientWithDetails>,
         batchSize: BatchSize
-    ): RecipeCalculations = withContext(Dispatchers.Default) {
+    ): RecipeCalculations {
+        var totalGravityPoints = 0.0
+        val totalVolume = batchSize.toGallons()
         
-        try {
-            var totalGravityPoints = 0.0
-            val totalVolume = batchSize.ozValue.toDouble() / 128.0 // Convert to gallons
-            var totalCost = 0.0
-            var totalSRM = 0.0
+        recipeIngredients.forEach { ingredientWithDetails ->
+            val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
+            val ingredient = ingredientWithDetails.ingredient
             
-            recipeIngredients.forEach { ingredientWithDetails ->
-                val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
-                val ingredient = ingredientWithDetails.ingredient
-                
-                // Calculate cost (use costPerUnit if available) - FIXED
-                totalCost += scaledQuantity * (ingredient.costPerUnit ?: 0.0)
-                
-                // Calculate gravity contribution based on ingredient type
-                when (ingredient.type) {
-                    IngredientType.FRUIT -> {
-                        // Handle honey and fruit sugars
-                        val gravityPoints = calculateFruitGravityContribution(
-                            ingredient.name.lowercase(),
-                            scaledQuantity,
-                            totalVolume
-                        )
-                        totalGravityPoints += gravityPoints
-                    }
-                    IngredientType.GRAIN -> {
-                        // Use estimated PPG for grains (most grains are around 36-38 PPG)
-                        val estimatedPPG = when {
-                            ingredient.name.lowercase().contains("pale malt") -> 37.0
-                            ingredient.name.lowercase().contains("wheat") -> 38.0
-                            ingredient.name.lowercase().contains("munich") -> 35.0
-                            ingredient.name.lowercase().contains("crystal") -> 34.0
-                            ingredient.name.lowercase().contains("caramel") -> 34.0
-                            else -> 36.0 // Default grain PPG
-                        }
-                        
+            // Calculate gravity contribution based on ingredient type
+            when (ingredient.type) {
+                IngredientType.GRAIN -> {
+                    // Use PPG (Points Per Gallon) for grains if available
+                    ingredient.ppgExtract?.let { ppg ->
                         val efficiency = 0.75 // 75% efficiency assumed
-                        val gravityPoints = (scaledQuantity * estimatedPPG * efficiency) / totalVolume
+                        val gravityPoints = (scaledQuantity * ppg * efficiency) / totalVolume
                         totalGravityPoints += gravityPoints
-                        
-                        // Estimate SRM contribution based on grain type
-                        val estimatedSRM = when {
-                            ingredient.name.lowercase().contains("pale") -> 2.0
-                            ingredient.name.lowercase().contains("wheat") -> 2.5
-                            ingredient.name.lowercase().contains("crystal 40") -> 40.0
-                            ingredient.name.lowercase().contains("crystal 60") -> 60.0
-                            ingredient.name.lowercase().contains("crystal 120") -> 120.0
-                            ingredient.name.lowercase().contains("chocolate") -> 350.0
-                            ingredient.name.lowercase().contains("black") -> 500.0
-                            else -> 5.0 // Default grain color
-                        }
-                        val srmContribution = (scaledQuantity * estimatedSRM) / totalVolume
-                        totalSRM += srmContribution
-                    }
-                    IngredientType.ADJUNCT -> {
-                        // Handle adjunct sugars
-                        val estimatedPPG = when {
-                            ingredient.name.lowercase().contains("sugar") -> 46.0
-                            ingredient.name.lowercase().contains("honey") -> 35.0
-                            ingredient.name.lowercase().contains("corn") -> 37.0
-                            else -> 35.0 // Default adjunct PPG
-                        }
-                        val gravityPoints = (scaledQuantity * estimatedPPG) / totalVolume
-                        totalGravityPoints += gravityPoints
-                    }
-                    else -> {
-                        // Non-fermentable ingredients don't contribute to gravity
                     }
                 }
+                IngredientType.FRUIT -> {
+                    // Estimate sugar content for fruits
+                    val estimatedSugarContent = estimateSugarContent(ingredient.name)
+                    val gravityPoints = (scaledQuantity * estimatedSugarContent * 46) / totalVolume
+                    totalGravityPoints += gravityPoints
+                }
+                IngredientType.SPICE,
+                IngredientType.ADDITIVE,
+                IngredientType.CLARIFIER -> {
+                    // Non-fermentable ingredients don't contribute to gravity
+                }
+                else -> {
+                    // Handle other ingredient types as needed
+                }
             }
-            
-            val estimatedOG = 1.0 + (totalGravityPoints / 1000.0)
-            val estimatedFG = calculateFinalGravity(estimatedOG)
-            val estimatedABV = calculateABV(estimatedOG, estimatedFG)
-            
-            RecipeCalculations(
-                estimatedOG = estimatedOG,
-                estimatedFG = estimatedFG,
-                estimatedABV = estimatedABV,
-                batchSize = batchSize
-            )
-            
-        } catch (e: Exception) {
-            RecipeCalculations(
-                estimatedOG = 1.000,
-                estimatedFG = 1.000,
-                estimatedABV = 0.0,
-                batchSize = batchSize
-            )
-        }
-    }
-    
-    /**
-     * Calculate gravity contribution from fruits and honey
-     */
-    private fun calculateFruitGravityContribution(
-        ingredientName: String,
-        quantity: Double,
-        volume: Double
-    ): Double {
-        val sugarContent = when {
-            ingredientName.contains("honey") -> 0.80 // 80% fermentable sugars
-            ingredientName.contains("apple") -> 0.15
-            ingredientName.contains("grape") -> 0.20
-            ingredientName.contains("cherry") -> 0.16
-            ingredientName.contains("strawberr") -> 0.08
-            ingredientName.contains("blueberr") -> 0.10
-            ingredientName.contains("blackberr") -> 0.10
-            ingredientName.contains("raspberr") -> 0.12
-            ingredientName.contains("elderberr") -> 0.07
-            ingredientName.contains("peach") -> 0.09
-            ingredientName.contains("pear") -> 0.10
-            ingredientName.contains("mango") -> 0.15
-            ingredientName.contains("pineapple") -> 0.13
-            ingredientName.contains("pomegranate") -> 0.16
-            ingredientName.contains("fig") -> 0.20
-            else -> 0.12 // Default fruit sugar content
         }
         
-        // Calculate gravity points (46 points per pound of sugar per gallon)
-        return (quantity * sugarContent * 46) / volume
-    }
-    
-    /**
-     * Calculate final gravity based on original gravity and yeast attenuation
-     */
-    private fun calculateFinalGravity(
-        og: Double,
-        attenuation: Double = 0.75 // Default 75% attenuation
-    ): Double {
-        return og - ((og - 1.0) * attenuation)
-    }
-    
-    /**
-     * Calculate ABV from original and final gravity
-     */
-    private fun calculateABV(og: Double, fg: Double): Double {
-        return (og - fg) * 131.25 // Standard ABV calculation
+        val estimatedOG = 1.0 + (totalGravityPoints / 1000.0)
+        val estimatedFG = calculateFinalGravity(estimatedOG)
+        val estimatedABV = calculateABV(estimatedOG, estimatedFG)
+        
+        return RecipeCalculations(
+            estimatedOG = estimatedOG,
+            estimatedFG = estimatedFG,
+            estimatedABV = estimatedABV,
+            batchSize = batchSize
+        )
     }
     
     /**
@@ -200,121 +103,153 @@ class RecipeCalculationService @Inject constructor() {
     }
     
     /**
-     * Calculate recipe cost breakdown by ingredient category
-     */
-    fun calculateCostBreakdown(
-        recipeIngredients: List<RecipeIngredientWithDetails>,
-        batchSize: BatchSize
-    ): Map<IngredientType, Double> {
-        val costByType = mutableMapOf<IngredientType, Double>()
-        
-        recipeIngredients.forEach { ingredientWithDetails ->
-            val scaledQuantity = ingredientWithDetails.recipeIngredient.baseQuantity * batchSize.scaleFactor
-            val cost = scaledQuantity * (ingredientWithDetails.ingredient.costPerUnit ?: 0.0)
-            val type = ingredientWithDetails.ingredient.type
-            
-            costByType[type] = (costByType[type] ?: 0.0) + cost
-        }
-        
-        return costByType
-    }
-    
-    /**
-     * Generate default recipe steps based on beverage type
+     * Generate default process steps for a beverage type
      */
     fun generateDefaultSteps(beverageType: BeverageType): List<RecipeStep> {
         return when (beverageType) {
             BeverageType.MEAD -> generateMeadSteps()
+            BeverageType.BEER -> generateBeerSteps()
             BeverageType.WINE -> generateWineSteps()
             BeverageType.CIDER -> generateCiderSteps()
-            BeverageType.BEER -> generateBeerSteps()
             BeverageType.KOMBUCHA -> generateKombuchaSteps()
-            BeverageType.WATER_KEFIR -> generateWaterKefirSteps()
-            BeverageType.OTHER -> generateGenericSteps()
         }
+    }
+    
+    /**
+     * Validate a recipe for completeness and correctness
+     */
+    fun validateRecipe(
+        recipe: Recipe,
+        recipeIngredients: List<RecipeIngredientWithDetails>
+    ): Map<String, String> {
+        val validationResults = mutableMapOf<String, String>()
+
+        // Validate recipe name
+        if (recipe.name.isBlank()) {
+            validationResults["Recipe Name"] = "Recipe name is required"
+        }
+
+        // Validate ingredients
+        if (recipeIngredients.isEmpty()) {
+            validationResults["Ingredients"] = "At least one ingredient is required"
+        }
+
+        // Check for appropriate base ingredients by beverage type
+        when (recipe.beverageType) {
+            BeverageType.MEAD -> {
+                val hasHoney = recipeIngredients.any { 
+                    it.ingredient.name.lowercase().contains("honey")
+                }
+                if (!hasHoney) {
+                    validationResults["Mead Base"] = "Mead recipes require honey"
+                }
+            }
+            BeverageType.BEER -> {
+                val hasGrain = recipeIngredients.any { 
+                    it.ingredient.type == IngredientType.GRAIN
+                }
+                if (!hasGrain) {
+                    validationResults["Beer Base"] = "Beer recipes require grain"
+                }
+            }
+            BeverageType.WINE -> {
+                val hasFruit = recipeIngredients.any { 
+                    it.ingredient.type == IngredientType.FRUIT
+                }
+                if (!hasFruit) {
+                    validationResults["Wine Base"] = "Wine recipes require fruit"
+                }
+            }
+            else -> { /* Other types are more flexible */ }
+        }
+
+        return validationResults
+    }
+    
+    private fun estimateSugarContent(ingredientName: String): Double {
+        return when (ingredientName.lowercase()) {
+            "honey" -> 0.80 // 80% fermentable sugars
+            "apple" -> 0.15
+            "grape" -> 0.20
+            "cherry" -> 0.16
+            "blueberry" -> 0.14
+            "strawberry" -> 0.08
+            "orange" -> 0.12
+            "maple syrup" -> 0.67
+            "corn sugar", "dextrose" -> 1.00
+            "table sugar", "sucrose" -> 1.00
+            "brown sugar" -> 0.97
+            else -> 0.12 // Default fruit sugar content
+        }
+    }
+    
+    private fun calculateFinalGravity(og: Double): Double {
+        // Simplified attenuation calculation (75% for typical yeast)
+        val attenuation = 0.75
+        return og - ((og - 1.0) * attenuation)
+    }
+    
+    private fun calculateABV(og: Double, fg: Double): Double {
+        return (og - fg) * 131.25 // Standard ABV calculation
     }
     
     private fun generateMeadSteps(): List<RecipeStep> {
         return listOf(
             RecipeStep(
-                id = 0,
-                recipeId = "",
                 stepNumber = 1,
                 phase = "preparation",
-                title = "Prepare Equipment",
-                description = "Sanitize all equipment including fermenter, airlock, and stirring spoon",
+                title = "Sanitize Equipment",
+                description = "Sanitize all equipment that will come in contact with the must",
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
-                id = 0,
-                recipeId = "",
                 stepNumber = 2,
-                phase = "preparation",
-                title = "Warm Honey",
-                description = "Gently warm honey to make it easier to mix (do not boil)",
+                phase = "preparation", 
+                title = "Heat Water",
+                description = "Heat water to dissolve honey. Do not boil honey to preserve flavor",
                 estimatedDuration = "15 minutes"
             ),
             RecipeStep(
-                id = 0,
-                recipeId = "",
                 stepNumber = 3,
-                phase = "preparation",
+                phase = "primary",
                 title = "Mix Must",
-                description = "Mix honey with water to create must. Add any nutrients.",
-                estimatedDuration = "20 minutes"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 4,
-                phase = "primary",
-                title = "Pitch Yeast",
-                description = "Rehydrate yeast if needed and pitch into must at proper temperature",
-                estimatedDuration = "15 minutes"
-            ),
-            RecipeStep(
-                id = 0,
-                recipeId = "",
-                stepNumber = 5,
-                phase = "primary",
-                title = "Primary Fermentation",
-                description = "Allow primary fermentation with daily stirring for first week",
-                estimatedDuration = "2-4 weeks"
-            )
-        )
-    }
-    
-    private fun generateWineSteps(): List<RecipeStep> {
-        return listOf(
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Sanitize Equipment", description = "Clean and sanitize all equipment",
-                estimatedDuration = "30 minutes"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "preparation",
-                title = "Prepare Fruit", description = "Crush grapes or prepare fruit for fermentation",
+                description = "Combine honey, water, and any acids. Cool to room temperature",
                 estimatedDuration = "1 hour"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 3, phase = "primary",
-                title = "Primary Fermentation", description = "Begin primary fermentation with daily punch-downs",
-                estimatedDuration = "5-7 days"
-            )
-        )
-    }
-    
-    private fun generateCiderSteps(): List<RecipeStep> {
-        return listOf(
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Press Apples", description = "Press fresh apples or use quality apple juice",
-                estimatedDuration = "2 hours"
+                stepNumber = 4,
+                phase = "primary",
+                title = "Pitch Yeast",
+                description = "Add rehydrated yeast to the must and transfer to fermenter",
+                estimatedDuration = "30 minutes"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
-                title = "Primary Fermentation", description = "Ferment with cider yeast",
-                estimatedDuration = "2-3 weeks"
+                stepNumber = 5,
+                phase = "primary",
+                title = "Primary Fermentation",
+                description = "Ferment at 65-75°F. Fermentation should begin within 24-48 hours",
+                estimatedDuration = "2-4 weeks"
+            ),
+            RecipeStep(
+                stepNumber = 6,
+                phase = "secondary",
+                title = "Rack to Secondary",
+                description = "Transfer mead off the lees to secondary fermenter",
+                estimatedDuration = "1 hour"
+            ),
+            RecipeStep(
+                stepNumber = 7,
+                phase = "aging",
+                title = "Aging",
+                description = "Age mead for 3-6 months, racking as needed for clarity",
+                estimatedDuration = "3-6 months"
+            ),
+            RecipeStep(
+                stepNumber = 8,
+                phase = "bottling",
+                title = "Bottle",
+                description = "Rack to bottling bucket, add priming sugar if desired, and bottle",
+                estimatedDuration = "2 hours"
             )
         )
     }
@@ -322,19 +257,119 @@ class RecipeCalculationService @Inject constructor() {
     private fun generateBeerSteps(): List<RecipeStep> {
         return listOf(
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Mash Grains", description = "Mash grains at appropriate temperature",
-                estimatedDuration = "1 hour"
-            ),
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "preparation",
-                title = "Sparge and Boil", description = "Sparge, collect wort, and boil",
+                stepNumber = 1,
+                phase = "preparation",
+                title = "Mash",
+                description = "Mash grains at appropriate temperature for 60 minutes",
                 estimatedDuration = "90 minutes"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 3, phase = "primary",
-                title = "Primary Fermentation", description = "Ferment with ale or lager yeast",
+                stepNumber = 2,
+                phase = "preparation",
+                title = "Lauter",
+                description = "Separate wort from grain bed",
+                estimatedDuration = "45 minutes"
+            ),
+            RecipeStep(
+                stepNumber = 3,
+                phase = "preparation",
+                title = "Boil",
+                description = "Boil wort for 60 minutes, adding hops as scheduled",
+                estimatedDuration = "75 minutes"
+            ),
+            RecipeStep(
+                stepNumber = 4,
+                phase = "primary",
+                title = "Cool and Pitch",
+                description = "Cool wort to fermentation temperature and pitch yeast",
+                estimatedDuration = "1 hour"
+            ),
+            RecipeStep(
+                stepNumber = 5,
+                phase = "primary",
+                title = "Primary Fermentation",
+                description = "Ferment for 1-2 weeks at appropriate temperature",
                 estimatedDuration = "1-2 weeks"
+            ),
+            RecipeStep(
+                stepNumber = 6,
+                phase = "bottling",
+                title = "Package",
+                description = "Bottle or keg the finished beer",
+                estimatedDuration = "2 hours"
+            )
+        )
+    }
+    
+    private fun generateWineSteps(): List<RecipeStep> {
+        return listOf(
+            RecipeStep(
+                stepNumber = 1,
+                phase = "preparation",
+                title = "Crush Fruit",
+                description = "Crush or press fruit to extract juice",
+                estimatedDuration = "1 hour"
+            ),
+            RecipeStep(
+                stepNumber = 2,
+                phase = "primary",
+                title = "Primary Fermentation",
+                description = "Begin fermentation on skins (for reds) or clear juice (for whites)",
+                estimatedDuration = "5-7 days"
+            ),
+            RecipeStep(
+                stepNumber = 3,
+                phase = "secondary",
+                title = "Press and Secondary",
+                description = "Press and transfer to secondary fermenter",
+                estimatedDuration = "4-8 weeks"
+            ),
+            RecipeStep(
+                stepNumber = 4,
+                phase = "aging",
+                title = "Aging",
+                description = "Age wine for 6-12 months with periodic racking",
+                estimatedDuration = "6-12 months"
+            ),
+            RecipeStep(
+                stepNumber = 5,
+                phase = "bottling",
+                title = "Bottle",
+                description = "Clarify, stabilize, and bottle wine",
+                estimatedDuration = "3 hours"
+            )
+        )
+    }
+    
+    private fun generateCiderSteps(): List<RecipeStep> {
+        return listOf(
+            RecipeStep(
+                stepNumber = 1,
+                phase = "preparation",
+                title = "Press Apples",
+                description = "Press fresh apples or prepare apple juice",
+                estimatedDuration = "2 hours"
+            ),
+            RecipeStep(
+                stepNumber = 2,
+                phase = "primary",
+                title = "Primary Fermentation",
+                description = "Ferment apple juice for 1-2 weeks",
+                estimatedDuration = "1-2 weeks"
+            ),
+            RecipeStep(
+                stepNumber = 3,
+                phase = "secondary",
+                title = "Secondary Fermentation",
+                description = "Rack to secondary, add any flavor additions",
+                estimatedDuration = "2-4 weeks"
+            ),
+            RecipeStep(
+                stepNumber = 4,
+                phase = "bottling",
+                title = "Package",
+                description = "Bottle or keg the finished cider",
+                estimatedDuration = "2 hours"
             )
         )
     }
@@ -342,111 +377,43 @@ class RecipeCalculationService @Inject constructor() {
     private fun generateKombuchaSteps(): List<RecipeStep> {
         return listOf(
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Prepare Tea", description = "Brew sweet tea for kombucha culture",
+                stepNumber = 1,
+                phase = "preparation",
+                title = "Brew Tea",
+                description = "Brew strong tea and dissolve sugar",
                 estimatedDuration = "30 minutes"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
-                title = "First Fermentation", description = "Ferment with SCOBY",
-                estimatedDuration = "7-14 days"
-            )
-        )
-    }
-    
-    private fun generateWaterKefirSteps(): List<RecipeStep> {
-        return listOf(
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Prepare Sugar Water", description = "Dissolve sugar in water",
-                estimatedDuration = "15 minutes"
+                stepNumber = 2,
+                phase = "primary",
+                title = "First Fermentation",
+                description = "Add SCOBY and starter tea, ferment for 7-10 days",
+                estimatedDuration = "7-10 days"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
-                title = "Ferment with Grains", description = "Add water kefir grains and ferment",
-                estimatedDuration = "24-48 hours"
-            )
-        )
-    }
-    
-    private fun generateGenericSteps(): List<RecipeStep> {
-        return listOf(
-            RecipeStep(
-                id = 0, recipeId = "", stepNumber = 1, phase = "preparation",
-                title = "Prepare Ingredients", description = "Prepare all ingredients for fermentation",
-                estimatedDuration = "1 hour"
+                stepNumber = 3,
+                phase = "secondary",
+                title = "Second Fermentation",
+                description = "Bottle with flavorings for carbonation",
+                estimatedDuration = "2-4 days"
             ),
             RecipeStep(
-                id = 0, recipeId = "", stepNumber = 2, phase = "primary",
-                title = "Primary Fermentation", description = "Begin fermentation process",
-                estimatedDuration = "1-4 weeks"
+                stepNumber = 4,
+                phase = "bottling",
+                title = "Refrigerate",
+                description = "Refrigerate to stop fermentation",
+                estimatedDuration = "Immediate"
             )
         )
-    }
-    
-    /**
-     * Calculate fermentation timeline based on recipe
-     */
-    fun calculateFermentationTimeline(
-        beverageType: BeverageType,
-        targetABV: Double?
-    ): Map<String, Int> {
-        val baseTimeline = when (beverageType) {
-            BeverageType.MEAD -> mapOf(
-                "primary" to 14,
-                "secondary" to 42,
-                "aging" to 90,
-                "total" to 146
-            )
-            BeverageType.WINE -> mapOf(
-                "primary" to 7,
-                "secondary" to 35,
-                "aging" to 120,
-                "total" to 162
-            )
-            BeverageType.CIDER -> mapOf(
-                "primary" to 14,
-                "secondary" to 28,
-                "aging" to 30,
-                "total" to 72
-            )
-            BeverageType.BEER -> mapOf(
-                "primary" to 10,
-                "secondary" to 0,
-                "aging" to 14,
-                "total" to 24
-            )
-            BeverageType.KOMBUCHA -> mapOf(
-                "primary" to 7,
-                "secondary" to 3,
-                "aging" to 0,
-                "total" to 10
-            )
-            BeverageType.WATER_KEFIR -> mapOf(
-                "primary" to 2,
-                "secondary" to 1,
-                "aging" to 0,
-                "total" to 3
-            )
-            BeverageType.OTHER -> mapOf(
-                "primary" to 14,
-                "secondary" to 14,
-                "aging" to 30,
-                "total" to 58
-            )
-        }
-        
-        // Adjust timeline based on target ABV
-        val abvMultiplier = when {
-            targetABV == null -> 1.0
-            targetABV > 14.0 -> 1.5 // High alcohol takes longer
-            targetABV > 10.0 -> 1.2 // Medium high alcohol
-            targetABV < 6.0 -> 0.8  // Low alcohol ferments faster
-            else -> 1.0
-        }
-        
-        return baseTimeline.mapValues { (_, days) ->
-            (days * abvMultiplier).toInt()
-        }
     }
 }
+
+/**
+ * Data class for recipe calculation results
+ */
+data class RecipeCalculations(
+    val estimatedOG: Double,
+    val estimatedFG: Double,
+    val estimatedABV: Double,
+    val batchSize: BatchSize
+)
