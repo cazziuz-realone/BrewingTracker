@@ -1,20 +1,12 @@
 package com.brewingtracker.data.models
 
-import com.brewingtracker.data.database.entities.Ingredient
-import com.brewingtracker.data.database.entities.RecipeIngredient
+import com.brewingtracker.data.database.entities.RecipeIngredientWithDetails as RoomRecipeIngredientWithDetails
+import com.brewingtracker.data.database.entities.ProjectIngredientWithDetails as RoomProjectIngredientWithDetails
 
 /**
- * Recipe ingredient with its associated ingredient details
+ * Type aliases for Room relation entities to avoid KAPT conflicts
+ * These provide clean references to the Room entities in the models package
  */
-data class RecipeIngredientWithDetails(
-    val recipeIngredient: RecipeIngredient,
-    val ingredient: Ingredient
-)
 
-/**
- * Project ingredient with details for UI display
- */
-data class ProjectIngredientWithDetails(
-    val projectIngredient: com.brewingtracker.data.database.entities.ProjectIngredient,
-    val ingredient: Ingredient
-)
+typealias RecipeIngredientWithDetails = RoomRecipeIngredientWithDetails
+typealias ProjectIngredientWithDetails = RoomProjectIngredientWithDetails
