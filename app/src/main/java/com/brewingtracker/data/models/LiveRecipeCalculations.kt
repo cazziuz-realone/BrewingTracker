@@ -15,6 +15,10 @@ data class LiveRecipeCalculations(
     val isCalculating: Boolean = false,
     val errorMessage: String? = null
 ) {
+    // ADDED: Computed property for error checking
+    val hasError: Boolean
+        get() = errorMessage != null
+    
     companion object {
         fun empty(batchSize: BatchSize): LiveRecipeCalculations {
             return LiveRecipeCalculations(
