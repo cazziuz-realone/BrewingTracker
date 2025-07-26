@@ -41,9 +41,14 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
             description = "A delicious ${beverageType.displayName.lowercase()} recipe"
         )
         
+        // Generate default steps with the actual recipe ID
+        val defaultSteps = calculationService.generateDefaultSteps(beverageType).map { step ->
+            step.copy(recipeId = newRecipe.id)
+        }
+        
         _uiState.value = _uiState.value.copy(
             recipe = newRecipe,
-            processSteps = calculationService.generateDefaultSteps(beverageType),
+            processSteps = defaultSteps,
             isLoading = false
         )
         
@@ -67,6 +72,11 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                     repository.getRecipeIngredientsWithDetails(recipeId).collect { ingredients ->
                         _recipeIngredients.value = ingredients
                         calculateRecipeParameters()
+                    }
+                    
+                    // Load recipe steps
+                    repository.getRecipeSteps(recipeId).collect { steps ->
+                        _uiState.value = _uiState.value.copy(processSteps = steps)
                     }
                 } else {
                     _uiState.value = _uiState.value.copy(
@@ -175,7 +185,9 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
     fun addStep(step: RecipeStep) {
         viewModelScope.launch {
             try {
-                repository.insertRecipeStep(step)
+                // Ensure the step has the correct recipe ID
+                val stepWithRecipeId = step.copy(recipeId = _uiState.value.recipe.id)
+                repository.insertRecipeStep(stepWithRecipeId)
                 loadRecipeSteps()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -207,7 +219,18 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
                     updatedAt = System.currentTimeMillis()
                 )
                 
-                repository.updateRecipe(recipe)
+                // Check if recipe exists (update) or is new (create)
+                val existingRecipe = repository.getRecipeById(recipe.id)
+                if (existingRecipe != null) {
+                    repository.updateRecipe(recipe)
+                } else {
+                    repository.createRecipe(recipe)
+                    
+                    // Save the default steps for new recipes
+                    _uiState.value.processSteps.forEach { step ->
+                        repository.insertRecipeStep(step)
+                    }
+                }
                 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -226,12 +249,16 @@ class EnhancedRecipeBuilderViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val project = Project(
+                    id = java.util.UUID.randomUUID().toString(),
                     name = projectName,
                     description = _uiState.value.recipe.description,
-                    beverageType = _uiState.value.recipe.beverageType,
+                    type = _uiState.value.recipe.beverageType,
                     targetOG = _uiState.value.calculations.estimatedOG,
                     targetFG = _uiState.value.calculations.estimatedFG,
-                    targetABV = _uiState.value.calculations.estimatedABV
+                    targetABV = _uiState.value.calculations.estimatedABV,
+                    batchSize = _uiState.value.selectedBatchSize.scaleFactor,
+                    startDate = System.currentTimeMillis(),
+                    currentPhase = ProjectPhase.PLANNING
                 )
                 
                 val projectId = repository.createProject(project)
