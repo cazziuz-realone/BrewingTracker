@@ -11,7 +11,7 @@ interface ProjectIngredientDao {
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredient>>
 
     @Transaction
-    @Query("SELECT * FROM project_ingredients WHERE projectId = :projectId ORDER BY additionTiming, createdAt")
+    @Query("SELECT * FROM project_ingredients WHERE projectId = :projectId ORDER BY additionTime, createdAt")
     fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -41,9 +41,9 @@ interface ProjectIngredientDao {
 
     @Query("""
         UPDATE project_ingredients 
-        SET plannedQuantity = :quantity, 
+        SET quantity = :quantity, 
             unit = :unit, 
-            additionTiming = :additionTime 
+            additionTime = :additionTime 
         WHERE projectId = :projectId AND ingredientId = :ingredientId
     """)
     suspend fun updateProjectIngredientDetails(
