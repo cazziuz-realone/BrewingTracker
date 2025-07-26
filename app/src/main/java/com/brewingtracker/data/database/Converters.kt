@@ -36,22 +36,13 @@ class Converters {
     fun toFlocculationType(type: String?): FlocculationType? = 
         type?.let { FlocculationType.valueOf(it) }
     
-    // NEW: Recipe-related converters
+    // Recipe-related converters
     @TypeConverter
     fun fromRecipeDifficulty(difficulty: RecipeDifficulty): String = difficulty.name
     
     @TypeConverter
     fun toRecipeDifficulty(difficulty: String): RecipeDifficulty = RecipeDifficulty.valueOf(difficulty)
     
-    @TypeConverter
-    fun fromBatchSize(batchSize: BatchSize): String = batchSize.name
-    
-    @TypeConverter
-    fun toBatchSize(batchSize: String): BatchSize = BatchSize.valueOf(batchSize)
-    
-    @TypeConverter
-    fun fromInventoryStatus(status: InventoryStatus): String = status.name
-    
-    @TypeConverter
-    fun toInventoryStatus(status: String): InventoryStatus = InventoryStatus.valueOf(status)
+    // REMOVED: BatchSize and InventoryStatus converters since they are model classes, not entities
+    // These should not be stored directly in the database
 }
