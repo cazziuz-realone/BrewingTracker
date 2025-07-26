@@ -42,14 +42,3 @@ data class Recipe(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) : Parcelable
-
-enum class RecipeDifficulty {
-    BEGINNER, INTERMEDIATE, ADVANCED
-}
-
-// Data class for calculations (moved here to avoid duplication)
-data class RecipeCalculations(
-    val estimatedOG: Double,
-    val estimatedFG: Double,
-    val estimatedABV: Double
-)
