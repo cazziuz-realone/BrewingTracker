@@ -1,40 +1,35 @@
 package com.brewingtracker.data.models
 
 /**
- * Enum representing the inventory status of ingredients for recipes
+ * Enum representing the inventory status of ingredients
+ * for recipe building and project planning
  */
 enum class InventoryStatus {
     /**
-     * Sufficient stock available for the recipe
+     * There is sufficient stock to fulfill the recipe requirement
      */
     SUFFICIENT,
     
     /**
-     * Insufficient stock - some available but not enough
+     * There is some stock but not enough to fulfill the recipe requirement
      */
     INSUFFICIENT,
     
     /**
-     * Unknown stock status - not tracked or not checked
+     * Stock status is unknown (ingredient not in inventory or stock not tracked)
      */
     UNKNOWN;
-
-    /**
-     * Check if the status indicates the ingredient is available
-     */
-    fun isAvailable(): Boolean = this == SUFFICIENT
     
-    /**
-     * Check if the status indicates a shortage
-     */
-    fun hasShortage(): Boolean = this == INSUFFICIENT
-    
-    /**
-     * Get a user-friendly display name
-     */
-    fun getDisplayName(): String = when (this) {
-        SUFFICIENT -> "In Stock"
-        INSUFFICIENT -> "Low Stock"
-        UNKNOWN -> "Unknown"
+    companion object {
+        /**
+         * Determine inventory status based on required quantity and available stock
+         */
+        fun fromStockComparison(requiredQuantity: Double, availableStock: Double): InventoryStatus {
+            return when {
+                availableStock >= requiredQuantity -> SUFFICIENT
+                availableStock > 0 -> INSUFFICIENT
+                else -> UNKNOWN
+            }
+        }
     }
 }
