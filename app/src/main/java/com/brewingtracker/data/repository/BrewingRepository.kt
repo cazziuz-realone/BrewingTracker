@@ -2,8 +2,6 @@ package com.brewingtracker.data.repository
 
 import com.brewingtracker.data.database.dao.*
 import com.brewingtracker.data.database.entities.*
-import com.brewingtracker.data.models.ProjectIngredientWithDetails
-import com.brewingtracker.data.models.RecipeIngredientWithDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -129,16 +127,9 @@ class BrewingRepository @Inject constructor(
         additionTime: String? = null
     ) = projectIngredientDao.updateProjectIngredientDetails(projectId, ingredientId, quantity, unit, additionTime)
     
-    // FIXED: Map Room entities to model entities
+    // FIXED: Use Room entities directly (no more mapping needed)
     fun getProjectIngredients(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
-        projectIngredientDao.getProjectIngredientsWithDetails(projectId).map { roomEntities ->
-            roomEntities.map { roomEntity ->
-                com.brewingtracker.data.models.ProjectIngredientWithDetails(
-                    projectIngredient = roomEntity.projectIngredient,
-                    ingredient = roomEntity.ingredient
-                )
-            }
-        }
+        projectIngredientDao.getProjectIngredientsWithDetails(projectId)
     
     // ADDED: Alias method to match ViewModel usage
     fun getProjectIngredientsWithDetails(projectId: String): Flow<List<ProjectIngredientWithDetails>> = 
@@ -177,16 +168,9 @@ class BrewingRepository @Inject constructor(
     fun getRecipeIngredientsFlow(recipeId: String): Flow<List<RecipeIngredient>> = 
         recipeIngredientDao.getRecipeIngredients(recipeId)
     
-    // FIXED: Map Room entities to model entities
+    // FIXED: Use Room entities directly (no more mapping needed)
     fun getRecipeIngredientsWithDetails(recipeId: String): Flow<List<RecipeIngredientWithDetails>> = 
-        recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId).map { roomEntities ->
-            roomEntities.map { roomEntity ->
-                com.brewingtracker.data.models.RecipeIngredientWithDetails(
-                    recipeIngredient = roomEntity.recipeIngredient,
-                    ingredient = roomEntity.ingredient
-                )
-            }
-        }
+        recipeIngredientDao.getRecipeIngredientsWithDetails(recipeId)
     
     // === RECIPE STEP OPERATIONS ===
     suspend fun insertRecipeStep(recipeStep: RecipeStep): Long = 
