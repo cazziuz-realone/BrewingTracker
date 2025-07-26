@@ -10,6 +10,10 @@ interface RecipeStepDao {
     @Query("SELECT * FROM recipe_steps WHERE recipeId = :recipeId ORDER BY stepNumber ASC")
     fun getStepsForRecipe(recipeId: String): Flow<List<RecipeStep>>
     
+    // ADDED: Alias method to match repository calls
+    @Query("SELECT * FROM recipe_steps WHERE recipeId = :recipeId ORDER BY stepNumber ASC")
+    fun getRecipeSteps(recipeId: String): Flow<List<RecipeStep>>
+    
     @Query("SELECT * FROM recipe_steps WHERE recipeId = :recipeId ORDER BY stepNumber ASC")
     suspend fun getStepsForRecipeSync(recipeId: String): List<RecipeStep>
     
@@ -19,17 +23,29 @@ interface RecipeStepDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStep(step: RecipeStep): Long
     
+    // ADDED: Alias method to match repository calls
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRecipeStep(step: RecipeStep): Long
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSteps(steps: List<RecipeStep>)
     
     @Update
     suspend fun updateStep(step: RecipeStep)
     
+    // ADDED: Alias method to match repository calls
+    @Update
+    suspend fun updateRecipeStep(step: RecipeStep)
+    
     @Delete
     suspend fun deleteStep(step: RecipeStep)
     
     @Query("DELETE FROM recipe_steps WHERE id = :stepId")
     suspend fun deleteStepById(stepId: Int)
+    
+    // ADDED: Alias method to match repository calls
+    @Query("DELETE FROM recipe_steps WHERE id = :stepId")
+    suspend fun deleteRecipeStep(stepId: Int)
     
     @Query("DELETE FROM recipe_steps WHERE recipeId = :recipeId")
     suspend fun deleteStepsForRecipe(recipeId: String)
