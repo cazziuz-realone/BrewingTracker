@@ -10,8 +10,9 @@ interface YeastDao {
     @Query("SELECT * FROM yeasts ORDER BY name ASC")
     fun getAllYeasts(): Flow<List<Yeast>>
 
+    // FIXED: Parameter type changed from String to YeastType to match repository calls
     @Query("SELECT * FROM yeasts WHERE type = :type ORDER BY name ASC")
-    fun getYeastsByType(type: String): Flow<List<Yeast>>
+    fun getYeastsByType(type: YeastType): Flow<List<Yeast>>
 
     @Query("SELECT * FROM yeasts WHERE beverageTypes LIKE '%' || :beverageType || '%' ORDER BY name ASC")
     fun getYeastsByBeverageType(beverageType: String): Flow<List<Yeast>>
@@ -39,6 +40,10 @@ interface YeastDao {
 
     @Delete
     suspend fun deleteYeast(yeast: Yeast)
+
+    // ADDED: Missing method that repository expects
+    @Query("DELETE FROM yeasts WHERE id = :yeastId")
+    suspend fun deleteYeast(yeastId: Int)
 
     @Query("UPDATE yeasts SET currentStock = :stock, updatedAt = :timestamp WHERE id = :yeastId")
     suspend fun updateStock(yeastId: Int, stock: Int, timestamp: Long = System.currentTimeMillis())
